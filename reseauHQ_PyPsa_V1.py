@@ -14,6 +14,10 @@ add_buses_to_network(network)
 #Add lines
 ajouter_lignes(network)
 
+
+print(network.loads)
+print(network.lines)
+
 # Perform power flow calculation
 network.pf()
 
@@ -34,7 +38,7 @@ network.plot(
     bus_sizes=0.01,
     line_colors='black',
     line_alpha=1,
-    line_widths=0.002,
+    line_widths=0.001,
     flow = network.snapshots[0],
     title="HQ Power Network Visualization Proof of concept",
 )

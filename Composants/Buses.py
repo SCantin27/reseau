@@ -40,13 +40,15 @@ def add_buses_to_network(network):
     for name, lon, lat, puissance in centrales:
         network.add("Bus", name=name, x=lon, y=lat)
     for name, lon, lat, puissance in centrales:
-        network.add("Generator", name,bus=name,p_set=puissance,control="PV")
+        network.add("Generator", name=name,bus=name,p_set=puissance,control="PV")
+
+        
 
 
 
     villes = [
-        ("Montreal", -73.5673, 45.5017, 7000, 700),
-        # ("Quebec", -71.2082, 46.8139, 800, 270),
+        ("Montreal", -73.5673, 45.5017, 5000, 500),
+        # ("Quebec", -71.2082, 46.8139, 3000, 270),
         # ("Laval", -73.7402, 45.5774, 450, 150),
         # ("Gatineau", -75.7110, 45.4767, 300, 100),
         # ("Sherbrooke", -71.8993, 45.4000, 250, 90),
@@ -69,7 +71,7 @@ def add_buses_to_network(network):
         network.add("Bus", name=name, x=lon, y=lat)
 
     for name, lon, lat ,MWatt ,MVar in villes:
-        network.add("Load", name, p_set=MWatt, q_set=MVar)
+        network.add("Load", name=name, p_set=MWatt, q_set=MVar)
 
 
 
