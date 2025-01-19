@@ -1,11 +1,14 @@
 def add_buses_to_network(network):
     
     centrales = [
-    ("La-Grande-2", -77.7056, 53.7767, 5328),
-    # ("La-Grande-1", -77.6869, 53.7822, 1368),
-    # ("La-Grande-3", -77.6419, 53.7578, 2416),
-    # ("La-Grande-4", -77.6083, 53.7461, 2792),
-    # ("La-Grande-5", -77.5672, 53.7281, 1596),
+    ("LaGrande-2", -77.7056, 53.7767, 5328),
+    ("Laforge-1", -72.6223755, 54.1695278, 878),
+    ("Laforge-2", -71.2887383, 54.5891822, 319),
+    # ("LaGrande-1", -77.6869, 53.7822, 1368),
+    # ("LaGrande-3", -77.6419, 53.7578, 2416),
+    ("LaGrande-4", -73.4727997, 53.8861106, 2779),
+    # ("LaGrande-5", -77.5672, 53.7281, 1596),
+    ("Brisay", -70.5408343, 54.441727, 469),
     # ("Caniapiscau", -72.9569, 51.4956, 1200),
     # ("Eastmain-1", -77.0972, 52.2133, 480),
     # ("Eastmain-1-A", -77.0811, 52.2447, 768),
@@ -34,36 +37,15 @@ def add_buses_to_network(network):
     # ("Barrage de Chute-aux-Outardes", -68.4928, 50.5300, 800),
     # ("Barrage de Rivière-aux-Rats", -70.5553, 48.9931, 620)
 ]
-
-
     for name, lon, lat, puissance in centrales:
         network.add("Bus", name=name, x=lon, y=lat)
-
     for name, lon, lat, puissance in centrales:
-        network.add("Generator", name,bus=name,p_set=puissance,control="PQ")
+        network.add("Generator", name,bus=name,p_set=puissance,control="PV")
 
-    postes = [
-        # ("Manic-5", -68.9390, 50.2940),
-        # ("Micoua", -68.6400, 50.2370),
-        # ("Radisson", -77.7460, 53.7490),
-        # ("Chenier", -73.4010, 45.3690),
-        # ("Haute-Cote-Nord", -69.7250, 49.0420),
-        # ("Metapelutin", -74.6640, 49.5160),
-        # ("Outaouais", -75.4950, 45.3820),
-        # ("Cote-Nord", -68.7000, 50.2000),
-        # ("Baie-James", -77.8000, 49.4200),
-        # ("Mauricie", -72.5480, 46.3440),
-        # ("Montérégie", -73.4510, 45.2990),
-        # ("Capitale-Nationale", -71.2140, 46.7710),
-        # ("Gaspesie", -64.2070, 48.5620),
-        # ("Abitibi-Temiscamingue", -78.3450, 48.5090)
-    ]
 
-    for name, lon, lat in postes:
-        network.add("Bus", name=name, x=lon, y=lat)
 
     villes = [
-        ("Montreal", -73.5673, 45.5017, 1200, 400),
+        ("Montreal", -73.5673, 45.5017, 7000, 700),
         # ("Quebec", -71.2082, 46.8139, 800, 270),
         # ("Laval", -73.7402, 45.5774, 450, 150),
         # ("Gatineau", -75.7110, 45.4767, 300, 100),
@@ -83,9 +65,32 @@ def add_buses_to_network(network):
         # ("Bromont", -72.6533, 45.3008, 80, 30),
         # ("Carleton-sur-Mer", -66.1533, 48.1003, 60, 20)
     ]
-
-
-    for name, lon, lat in villes:
+    for name, lon, lat,MWatt,MVar in villes:
         network.add("Bus", name=name, x=lon, y=lat)
-    for name, lon, lat, Watt, MVar in villes:
-        network.add("Load", name, p_set=Watt, q_set=MVar)
+
+    for name, lon, lat ,MWatt ,MVar in villes:
+        network.add("Load", name, p_set=MWatt, q_set=MVar)
+
+
+
+    postes = [
+        # ("Manic-5", -68.9390, 50.2940),
+        # ("Micoua", -68.6400, 50.2370),
+        # ("Radisson", -77.7460, 53.7490),
+        # ("Chenier", -73.4010, 45.3690),
+        # ("Haute-Cote-Nord", -69.7250, 49.0420),
+        # ("Metapelutin", -74.6640, 49.5160),
+        # ("Outaouais", -75.4950, 45.3820),
+        # ("Cote-Nord", -68.7000, 50.2000),
+        # ("Baie-James", -77.8000, 49.4200),
+        # ("Mauricie", -72.5480, 46.3440),
+        # ("Montérégie", -73.4510, 45.2990),
+        # ("Capitale-Nationale", -71.2140, 46.7710),
+        # ("Gaspesie", -64.2070, 48.5620),
+        # ("Abitibi-Temiscamingue", -78.3450, 48.5090)
+    ]
+    for name, lon, lat in postes:
+        network.add("Bus", name=name, x=lon, y=lat)
+
+
+
