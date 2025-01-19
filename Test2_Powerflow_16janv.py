@@ -10,6 +10,7 @@ network = pypsa.Network()
 add_buses_to_network(network)
 
 print(network.buses)
+print(network.generators)
 
 
 # Add lines between buses
@@ -57,42 +58,6 @@ print(network.lines)
 #                 bus1="Saguenay",
 #                 x=0.33,
 #                 r=0.01)
-
-# Add generators
-
-network.add("Generator", "La-Grande-2",
-            bus="La-Grande-2",
-            p_set=3000,
-            control="PQ")
-
-# network.add("Generator", "Manic",
-#             bus="Manic",
-#             p_set=2660,
-#             control="PQ")
-
-# network.add("Generator", "LG2",
-#             bus="Baie James",
-#             p_set=5616,
-#             control="PQ")
-
-# network.add("Generator", "Carleton",
-#             bus="Carleton",
-#             p_set=68,
-#             control="PQ")
-
-print(network.generators)
-
-# Add loads
-network.add("Load", "Montreal",
-            bus="Montreal",
-            p_set=2000,
-            q_set=100)
-
-# network.add("Load", "Qc consomption",
-#             bus="Quebec",
-#             p_set=4000,
-#             q_set=80)
-print(network.loads)
 
 # Perform power flow calculation
 network.pf()
