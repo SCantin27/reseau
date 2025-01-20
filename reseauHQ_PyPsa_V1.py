@@ -17,7 +17,7 @@ ajouter_lignes(network)
 
 
 print(network.loads)
-print(network.lines['length'])
+print(network.lines)
 
 # Perform power flow calculation
 network.pf()
