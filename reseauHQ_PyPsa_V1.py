@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from Composants.Buses import add_buses_to_network
 from Composants.Lines import ajouter_lignes
 
+
 #Create network
 network = pypsa.Network()
 
@@ -16,7 +17,7 @@ ajouter_lignes(network)
 
 
 print(network.loads)
-print(network.lines)
+print(network.lines['length'])
 
 # Perform power flow calculation
 network.pf()

@@ -1,5 +1,7 @@
 def ajouter_lignes(network):
 
+    from Fonctions.Length_calculator import haversine
+
     #Define point A to point B of every lines
     lignes = [
         ("LaGrande-2", "Montreal"),
@@ -23,4 +25,5 @@ def ajouter_lignes(network):
  
     #Add all the lines defined in 'lignes' to the network, using the 735kV type
     for i, (bus0, bus1) in enumerate(lignes, start=1):
-        network.add("Line",f"Ligne{i}",bus0=bus0,bus1=bus1,lenght = 100, x=0.33, r=0.01, g=0, b=10e-6)
+        haversine_length = haversine(network.buses.loc[bus0, 'y'], network.buses.loc[bus0, 'x'], network.buses.loc[bus1, 'y'], network.buses.loc[bus1, 'x'])
+        network.add("Line",f"Ligne{i}",bus0=bus0,bus1=bus1, type=ligne_735kV, length=haversine_length)
