@@ -14,10 +14,13 @@ add_buses_to_network(network)
 
 #Add lines
 ajouter_lignes(network)
+pypsa.pf.apply_line_types(network)
 
 
 print(network.loads)
 print(network.lines)
+
+
 
 # Perform power flow calculation
 network.pf()
@@ -32,19 +35,19 @@ print(network.buses_t.v_ang * 180 / np.pi)
 print("\nVoltage magnitudes (p.u.):")
 print(network.buses_t.v_mag_pu)
 
-# #Plotting parameters
-# fig, ax = plt.subplots(figsize=(15, 8))
-# network.plot(
-#     color_geomap={'ocean': 'lightblue','land': 'lightgreen'},
-#     bus_sizes=0.01,
-#     line_colors='black',
-#     line_alpha=1,
-#     line_widths=0.001,
-#     flow = network.snapshots[0],
-#     title="HQ Power Network Visualization Proof of concept",
-# )
+#Plotting parameters
+fig, ax = plt.subplots(figsize=(15, 8))
+network.plot(
+    color_geomap={'ocean': 'lightblue','land': 'lightgreen'},
+    bus_sizes=0.01,
+    line_colors='black',
+    line_alpha=1,
+    line_widths=0.1,
+    flow = network.snapshots[0],
+    title="HQ Power Network Visualization Proof of concept",
+)
 
-# # Show the plot
-# plt.show()
+# Show the plot
+plt.show()
 
 
