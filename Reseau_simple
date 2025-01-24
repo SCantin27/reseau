@@ -11,13 +11,13 @@ n.add("Bus", name="GenBus", v_nom=120)
 n.add("Bus", name="LoadBus", v_nom=120)
 
 # Add Slack Bus
-n.add("Generator", name="SlackGen", bus="SlackBus", p_nom=1000, control="Slack")
+n.add("Generator", name="SlackGen", bus="SlackBus", p_nom=0, control="Slack")
 
 # Add other buses
 n.add("Generator", name="Gen1", bus="GenBus", p_nom=1000, q_min=-200, q_max=200)
 
 # Add 1 load
-n.add("Load", name="Load1", bus="LoadBus", p_set=300)
+n.add("Load", name="Load1", bus="LoadBus", p_set=200)
 
 # Add 3 lines with realistic parameters
 n.add("Line", name="Gen-Slack", bus0="GenBus", bus1="SlackBus", x=0.05, r=0.01)
