@@ -13,9 +13,6 @@ network = pypsa.Network()
 add_buses_to_network(network)
 
 
-# network.add("Bus", name="Montreal", x=-73.5673, y=45.5017,v_nom=735,control="PQ")
-
-# network.add("Load", name="Consommation de montreal", p_set=2000, q_set=100,control="PQ")
 
 #Add lines
 ajouter_lignes(network)
@@ -41,7 +38,7 @@ print(network.buses_t.v_ang * 180 / np.pi)
 
 print("\nVoltage magnitudes (p.u.):")
 print(network.buses_t.v_mag_pu)
-""" 
+
 #Plotting parameters
 fig, ax = plt.subplots(figsize=(15, 8))
 network.plot(
@@ -56,6 +53,3 @@ network.plot(
 
 # Show the plot
 plt.show()
-
-
- """
