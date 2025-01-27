@@ -1,0 +1,18 @@
+{
+    "metadata": {
+        "unit": "degrees",
+        "type": "geolocation"
+    },
+    "plants": {
+        "tracy": {
+            "id": "TRA",
+            "latitude": 45.8833,
+            "longitude": -73.4333
+        },
+        "bécancour": {
+            "id": "BEC",
+            "latitude": 46.3333,
+            "longitude": -72.4333
+        }
+    }
+}
