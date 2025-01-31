@@ -6,7 +6,6 @@ n = pypsa.Network()
 # Add buses with carriers
 n.add("Bus", name="SlackBus", v_nom=120)
 n.add("Bus", name="GenBus", v_nom=120)
-n.add("Bus", name="GenBus2", v_nom=120)
 n.add("Bus", name="LoadBus", v_nom=120)
 
 # Add Slack Bus Generator (as last resort)
@@ -15,7 +14,6 @@ n.generators.loc["SlackGen", "p_nom_extendable"] = True  # Allow extension of p_
 
 # Add other generators
 n.add("Generator", name="Gen1", bus="GenBus", p_nom=1000, q_min=-200, q_max=200, marginal_cost=10)
-n.add("Generator", name="Gen2", bus="GenBus2", p_nom=1000, q_min=-200, q_max=200, marginal_cost=10)
 
 # Add Load
 n.add("Load", name="Load1", bus="LoadBus", p_set=200)
@@ -24,8 +22,6 @@ n.add("Load", name="Load1", bus="LoadBus", p_set=200)
 n.add("Line", name="Gen-Slack", bus0="GenBus", bus1="SlackBus", x=0.05, r=0.01, s_nom=1000)
 n.add("Line", name="Gen-Load", bus0="GenBus", bus1="LoadBus", x=0.05, r=0.01, s_nom=1000)
 n.add("Line", name="Slack-Load", bus0="SlackBus", bus1="LoadBus", x=0.05, r=0.01, s_nom=1000)
-n.add("Line", name="Gen2-Slack", bus0="GenBus2", bus1="SlackBus", x=0.05, r=0.01, s_nom=1000)
-n.add("Line", name="Gen2-Load", bus0="GenBus2", bus1="LoadBus", x=0.05, r=0.01, s_nom=1000)
 
 # Optimize the network
 n.optimize()
