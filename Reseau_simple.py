@@ -4,27 +4,36 @@ import pypsa
 n = pypsa.Network()
 
 # Add buses with carriers
-n.add("Bus", name="SlackBus", v_nom=120)
-n.add("Bus", name="GenBus", v_nom=120)
-n.add("Bus", name="LoadBus", v_nom=120)
+n.add("Bus", name="SlackBus", v_nom=735)
+n.add("Bus", name="GenBus", v_nom=735)
+n.add("Bus", name="LoadBus", v_nom=735)
+n.add("Bus", name="GenBus2", v_nom=735)
 
-# Add Slack Bus Generator (as last resort)
+# Add Slack Bus Generator
 n.add("Generator", name="SlackGen", bus="SlackBus", p_nom=1000, control="Slack", marginal_cost=1000)
 n.generators.loc["SlackGen", "p_nom_extendable"] = True  # Allow extension of p_nom if needed
 
 # Add other generators
-n.add("Generator", name="Gen1", bus="GenBus", p_nom=1000, q_min=-200, q_max=200, marginal_cost=10)
+n.add("Generator", name="Gen1", bus="GenBus", p_nom=1000, q_min=-20, q_max=20, marginal_cost=9)
+n.add("Generator", name="Gen2", bus="GenBus2", p_nom=10000, q_min=-200, q_max=200, marginal_cost=10)
 
 # Add Load
-n.add("Load", name="Load1", bus="LoadBus", p_set=200)
+n.add("Load", name="Load1", bus="LoadBus", p_set=9000)
 
 # Add Transmission Lines
-n.add("Line", name="Gen-Slack", bus0="GenBus", bus1="SlackBus", x=0.05, r=0.01, s_nom=1000)
-n.add("Line", name="Gen-Load", bus0="GenBus", bus1="LoadBus", x=0.05, r=0.01, s_nom=1000)
-n.add("Line", name="Slack-Load", bus0="SlackBus", bus1="LoadBus", x=0.05, r=0.01, s_nom=1000)
+n.add("Line", name="Gen2-Load", bus0="GenBus2", bus1="LoadBus", x=5, r=0.1, s_nom=10000)
+n.add("Line", name="Gen-Load", bus0="GenBus", bus1="LoadBus", x=5, r=0.1, s_nom=10000)
+n.add("Line", name="Slack-Load", bus0="SlackBus", bus1="LoadBus", x=0.01, r=0.01, s_nom=10000)
 
-# Optimize the network
+# Optimize the network : Run the DC PowerFlow to evaluate optimal generation dispatch
 n.optimize()
+
+# Set the generation of each generators to it's optimal value for the AC powerflow
+n.generators.loc["Gen1", "p_set"] = p_opt_gen1 = n.generators_t.p["Gen1"].iloc[-1]
+n.generators.loc["Gen2", "p_set"] = p_opt_gen2 = n.generators_t.p["Gen2"].iloc[-1]
+
+# Run the AC PowerFlow
+n.pf()
 
 # Display results
 print("\nPower flow on lines (p0):")
@@ -35,3 +44,7 @@ print(n.generators_t.p)
 
 print("\nPower received by the load (p):")
 print(n.loads_t.p)
+
+# Afficher les pertes de puissance pour chaque ligne
+print("\nPertes de puissance dans les lignes :")
+print(abs(n.lines_t.p0 + n.lines_t.p1))
