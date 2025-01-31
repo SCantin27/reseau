@@ -1,0 +1,9 @@
+
+Reperer les lignes avec trop de charges. Par exemple si avec les ajouts de l'user une ligne est chargé a 150%. 
+Ajouter la charge en trop à l'import (Ligne d'import Ottawa, NYC). Ou trouver un moyen d'ajouter des lignes si il ya trop
+
+Pour gerer le pilotage, possibilité de le faire artificiellement avec le cout marginal de production pour 1MWh. 
+Pour les centrales a reservoir, on peut dire que le cout marginal est nulle lorsque le reservoir est plein et infini lorsque le reservoir est vide. 
+Donc on peut créer une optimisation (pilotage) du réseau en gérant le cout marginal du reservoir en fonction du niveau de celui ci.
+ Comme ça on peut optimisé et le cout et faire le pilotage
+
