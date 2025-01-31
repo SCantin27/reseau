@@ -1,0 +1,18 @@
+{
+    "metadata": {
+        "unit": "degrees",
+        "type": "geolocation"
+    },
+    "plants": {
+        "mont_sainte_marguerite": {
+            "id": "MSM",
+            "latitude": 46.6341,
+            "longitude": -70.3497
+        },
+        "rivière_du_moulin": {
+            "id": "RDM",
+            "latitude": 48.6062,
+            "longitude": -71.2065
+        }
+    }
+}
