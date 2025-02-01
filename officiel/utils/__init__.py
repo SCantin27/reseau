@@ -2,6 +2,7 @@ from .data_loader import NetworkDataLoader, DataLoadError, NetworkData
 from .validators import NetworkDataValidator
 from .geo_utils import GeoUtils
 from .time_utils import TimeSeriesManager
+from .lines_filter import LineFilter
 
 __all__ = [
     'NetworkDataLoader',
@@ -9,5 +10,6 @@ __all__ = [
     'NetworkData',
     'NetworkDataValidator',
     'GeoUtils',
-    'TimeSeriesManager'
+    'TimeSeriesManager',
+    'LineFilter'
 ]
