@@ -45,6 +45,5 @@ print(n.generators_t.p)
 print("\nPower received by the load (p):")
 print(n.loads_t.p)
 
-# Afficher les pertes de puissance pour chaque ligne
-print("\nPertes de puissance dans les lignes :")
+print("\nPower losses on each lines :")
 print(abs(n.lines_t.p0 + n.lines_t.p1))
