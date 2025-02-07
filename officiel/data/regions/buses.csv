@@ -1,0 +1,16 @@
+name,v_nom,type,x,y,control
+BEA,735,prod,-73.9128,45.3119,PV    # Centrale Beauharnois
+MTL,315,conso,-73.5673,45.5017,PQ    # Charge Montréal
+QBC,315,conso,-71.2080,46.8139,PQ    # Charge Québec
+LG2,735,prod,-77.6292,53.7875,slack  # Centrale La Grande-2 (plus grande centrale, donc slack bus)
+RIM,315,conso,-68.5242,48.4484,PQ    # Charge Rimouski
+TRR,315,conso,-72.5500,46.3500,PQ    # Charge Trois-Rivières
+CHU,735,prod,-68.7027,49.2640,PV    # Centrale Churchill Falls
+MAN,735,prod,-74.3694,49.9171,PV    # Centrale Manic-5
+LAT,315,conso,-78.6389,48.7833,PQ    # Charge La Tuque
+GAT,315,conso,-75.7000,45.4833,PQ    # Charge Gatineau
+NIC,735,conso,-71.9000,45.9000,PQ    # Charge Nicolet (point de connexion important)
+HER,735,line,-73.6389,45.5167,PQ     # Poste Hertel (interconnexion majeure)
+CHA,735,line,-74.5000,45.3167,PQ     # Poste Châteauguay (interconnexion NY)
+RAD,735,prod,-74.7694,52.4775,PV     # Centrale Robert-Bourassa
+MAG,315,conso,-65.8666,50.8166,PQ    # Charge Sept-Îles/Port-Cartier
