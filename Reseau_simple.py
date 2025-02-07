@@ -5,26 +5,65 @@ n = pypsa.Network()
 
 # Add buses with carriers
 n.add("Bus", name="SlackBus", v_nom=735)
-n.add("Bus", name="GenBus", v_nom=735)
-n.add("Bus", name="LoadBus", v_nom=735)
+
+n.add("Bus", name="GenBus1", v_nom=735)
 n.add("Bus", name="GenBus2", v_nom=735)
+n.add("Bus", name="GenBus3", v_nom=735)
+n.add("Bus", name="GenBus4", v_nom=735)
+n.add("Bus", name="GenBus5", v_nom=735)
+
+n.add("Bus", name="LoadBus1", v_nom=735)
+n.add("Bus", name="LoadBus2", v_nom=735)
+n.add("Bus", name="LoadBus3", v_nom=735)
+n.add("Bus", name="LoadBus4", v_nom=735)
+n.add("Bus", name="LoadBus5", v_nom=735)
+
+n.add("Bus", name="NeutralBus1", v_nom=735)
+n.add("Bus", name="NeutralBus2", v_nom=735)
 
 # Add Slack Bus Generator
 n.add("Generator", name="SlackGen", bus="SlackBus", p_nom=1000, control="Slack", marginal_cost=1000)
 n.generators.loc["SlackGen", "p_nom_extendable"] = True  # Allow extension of p_nom if needed
 
 # Add other generators
-n.add("Generator", name="Gen1", bus="GenBus", p_nom=1000, q_min=-20, q_max=20, control="PV", marginal_cost=9)
-n.add("Generator", name="Gen2", bus="GenBus2", p_nom=10000, q_min=-200, q_max=200, control="PV", marginal_cost=10)
+n.add("Generator", name="Gen1", bus="GenBu1", p_nom=1000, q_min=-10, q_max=10, control="PV", marginal_cost=1)
+n.add("Generator", name="Gen2", bus="GenBus2", p_nom=2000, q_min=-20, q_max=20, control="PV", marginal_cost=2)
+n.add("Generator", name="Gen3", bus="GenBus3", p_nom=3000, q_min=-30, q_max=30, control="PV", marginal_cost=3)
+n.add("Generator", name="Gen4", bus="GenBus4", p_nom=4000, q_min=-40, q_max=40, control="PV", marginal_cost=4)
+n.add("Generator", name="Gen5", bus="GenBus5", p_nom=5000, q_min=-50, q_max=50, control="PV", marginal_cost=5)
 
 # Add Load
-n.add("Load", name="Load1", bus="LoadBus", control="PQ", p_set=9000)
+n.add("Load", name="Load1", bus="LoadBus1", control="PQ", p_set=500)
+n.add("Load", name="Load2", bus="LoadBus2", control="PQ", p_set=1000)
+n.add("Load", name="Load3", bus="LoadBus3", control="PQ", p_set=1500)
+n.add("Load", name="Load4", bus="LoadBus4", control="PQ", p_set=2000)
+n.add("Load", name="Load5", bus="LoadBus5", control="PQ", p_set=2500)
 
 # Add Transmission Lines
+n.add("Line", name="Gen1-Gen2", bus0="GenBus1", bus1="GenBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen2-Gen3", bus0="GenBus2", bus1="GenBus3", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen3-Neutral1", bus0="Gen3", bus1="NeutralBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen4-Neutral1", bus0="Gen4", bus1="NeutralBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
+
+n.add("Line", name="Neutral1-Neutral2", bus0="NeutralBus1", bus1="NeutralBus2", x=100, r=10, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral1-Neutral2(2)", bus0="NeutralBus1", bus1="NeutralBus2", x=100, r=10, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral1-Neutral2(3)", bus0="NeutralBus1", bus1="NeutralBus2", x=100, r=10, g=0.00049, s_nom=100000)
+
+n.add("Line", name="Gen5-Load5", bus0="GenBus5", bus1="LoadBus5", x=5, r=0.5, g=0.00049, s_nom=100000)
+
+n.add("Line", name="Neutral2-Load5", bus0="NeutralBus2", bus1="LoadBus5", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load4", bus0="NeutralBus2", bus1="LoadBus4", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load3", bus0="NeutralBus2", bus1="LoadBus3", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load3(2)", bus0="NeutralBus2", bus1="LoadBus3", x=1, r=0.1, g=0.00049, s_nom=100000)
+
+n.add("Line", name="Load3-Load2", bus0="LoadBus3", bus1="LoadBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Load2-Load1", bus0="LoadBus2", bus1="LoadBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
+
 n.add("Line", name="Gen2-Load", bus0="GenBus2", bus1="LoadBus", x=100, r=10, g=0.00049, s_nom=100000)
 n.add("Line", name="Gen-Load", bus0="GenBus", bus1="LoadBus", x=100, r=10, g=0.00049, s_nom=100000)
 
-n.add("Line", name="Slack-Load", bus0="SlackBus", bus1="LoadBus", x=0.000001, r=0.000000001, s_nom=100000)
+#Slack Node : Do not remove
+n.add("Line", name="Slack-Neutral1", bus0="SlackBus", bus1="NeutralBus1", x=0.000001, r=0.000000001, s_nom=100000)
 
 # Optimize the network : Run the DC PowerFlow to evaluate optimal generation dispatch
 n.optimize()
