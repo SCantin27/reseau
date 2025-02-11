@@ -11,14 +11,22 @@ from pathlib import Path
 
 
 def print_network_info(network):
-    """Affiche les informations principales du réseau."""
+    """Affiche les informations détaillées du réseau."""
     print("\n=== Informations du réseau ===")
     print(f"Nombre de bus: {len(network.buses)}")
     print(f"Nombre de lignes: {len(network.lines)}")
     print(f"Nombre de générateurs: {len(network.generators)}")
+    print(f"Nombre de types de lignes: {len(network.line_types)}")
+    print(f"Nombre de carriers: {len(network.carriers)}")
     
     print("\n=== Types de générateurs ===")
-    print(network.generators.groupby('carrier').p_nom.sum())
+    print("Générateurs pilotables:")
+    pilotables = network.generators[network.generators.type == 'pilotable']
+    print(pilotables.groupby('carrier').p_nom.sum())
+    
+    print("\nGénérateurs non pilotables:")
+    non_pilotables = network.generators[network.generators.type == 'non_pilotable'] 
+    print(non_pilotables.groupby('carrier').p_nom.sum())
     
     if hasattr(network, 'snapshots'):
         print("\n=== Période temporelle ===")
@@ -30,14 +38,13 @@ def print_network_info(network):
 def main():
     """Fonction principale."""
     try:
-        # Initialisation du loader et du validateur
+        # Initialisation du loader
         loader = NetworkDataLoader()
-        validator = NetworkValidator()
-
+        
         # Chargement des données statiques
         print("\nChargement des données statiques...")
         network = loader.load_network_data()
-        print("✓ Données statiques chargées")
+        print("✓ Données statiques chargées avec succès")
 
         # Affichage des informations statiques
         print_network_info(network)
@@ -47,18 +54,19 @@ def main():
         network = loader.load_timeseries_data(network, '2024')
         print("✓ Données temporelles chargées")
 
-        # Validation du réseau complet
-        print("\nValidation du réseau...")
-        if validator.validate_network(network):
-            print("✓ Réseau validé avec succès")
-
         # Affichage des informations complètes
         print_network_info(network)
 
         # Test d'accès aux données temporelles
-        print("\n=== Test d'accès aux données temporelles ===")
-        print("\nProfil de charge (premiers points):")
+        print("\n=== Vérification des données temporelles ===")
+        print("\nProfils de charge (premiers points):")
         print(network.loads_t.p_set.head())
+        
+        print("\nCoûts marginaux des générateurs pilotables (premiers points):")
+        print(network.generators_t.marginal_cost.head())
+        
+        print("\nProduction maximale des générateurs non pilotables (premiers points):")
+        print(network.generators_t.p_max_pu.head())
 
         return 0
 

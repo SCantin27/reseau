@@ -120,9 +120,18 @@ class NetworkDataLoader:
             for idx, row in carriers_df.iterrows():
                 network.add("Carrier", name=idx, **row.to_dict())
 
-            generators_df = pd.read_csv(self.data_dir / "topology" / "centrales" / "generators.csv")
-            generators_df = generators_df.set_index('name')
-            for idx, row in generators_df.iterrows():
+            # Chargement des générateurs non pilotables
+            generators_non_pilotable_df = pd.read_csv(
+                self.data_dir / "topology" / "centrales" / "generators_non_pilotable.csv"
+            ).set_index('name')
+            for idx, row in generators_non_pilotable_df.iterrows():
+                network.add("Generator", name=idx, **row.to_dict())
+
+            # Chargement des générateurs pilotables
+            generators_pilotable_df = pd.read_csv(
+                self.data_dir / "topology" / "centrales" / "generators_pilotable.csv"
+            ).set_index('name')
+            for idx, row in generators_pilotable_df.iterrows():
                 network.add("Generator", name=idx, **row.to_dict())
             
             return network
@@ -157,10 +166,15 @@ class NetworkDataLoader:
             network.loads_t.p_set = loads_df
 
             
-            # Chargement des coûts marginaux des générateurs
-            gen_path = self.data_dir / "timeseries" / year / "generation" / "generators-marginal_cost.csv"
-            gen_df = pd.read_csv(gen_path, index_col=0, parse_dates=True)
-            network.generators_t.marginal_cost = gen_df
+            # Chargement des coûts marginaux pour les générateurs pilotables
+            gen_cost_path = self.data_dir / "timeseries" / year / "generation" / "generators-marginal_cost.csv"
+            gen_cost_df = pd.read_csv(gen_cost_path, index_col=0, parse_dates=True)
+            network.generators_t.marginal_cost = gen_cost_df
+
+            # Chargement de la production maximale (p_max_pu) pour les générateurs non pilotables
+            gen_pmax_path = self.data_dir / "timeseries" / year / "generation" / "generators-p_max_pu.csv"
+            gen_pmax_df = pd.read_csv(gen_pmax_path, index_col=0, parse_dates=True)
+            network.generators_t.p_max_pu = gen_pmax_df
             
             # Définition des snapshots
             network.set_snapshots(loads_df.index)

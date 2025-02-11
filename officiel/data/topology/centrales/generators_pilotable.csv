@@ -1,0 +1,10 @@
+name,bus,type,p_nom,p_nom_extendable,p_nom_min,p_nom_max,carrier
+LaGrande2,LG2,pilotable,5616,False,0,5616,hydro_reservoir        
+RobertBourassa,RAD,pilotable,5616,False,0,5616,hydro_reservoir
+Manic5,MAN,pilotable,1596,False,0,1596,hydro_reservoir       
+ChurchillFalls,CHU,pilotable,5428,False,0,5428,hydro_reservoir
+Romaine1,MAG,pilotable,270,True,270,270,hydro_reservoir
+Romaine2,MAG,pilotable,640,True,640,640,hydro_reservoir
+Romaine3,MAG,pilotable,395,True,395,395,hydro_reservoir
+Romaine4,MAG,pilotable,245,True,245,245,hydro_reservoir
+Becancour,TRR,pilotable,411,False,0,411,thermique

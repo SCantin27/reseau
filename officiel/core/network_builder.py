@@ -34,7 +34,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 from ..utils.data_loader import NetworkDataLoader
-from ..utils.validators import NetworkDataValidator
+from ..utils.validators import NetworkValidator
 from ..utils.geo_utils import GeoUtils
 from ..utils.time_utils import TimeSeriesManager
 
@@ -58,7 +58,7 @@ class NetworkBuilder:
     def __init__(self, data_dir: str = "data"):
         self.network = pypsa.Network()
         self.data_loader = NetworkDataLoader(data_dir)
-        self.validator = NetworkDataValidator()
+        self.validator = NetworkValidator()
         self.time_manager = TimeSeriesManager(data_dir)
 
     def build_network(self, start_date: str = None, end_date: str = None) -> pypsa.Network:
