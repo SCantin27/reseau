@@ -1,16 +1,16 @@
 name,bus0,bus1,type,capital_cost,length
-L0001,LG2,RAD,735kV_line,100000,100     # Connexion La Grande-2 vers Robert-Bourassa
-L0002,RAD,MAN,735kV_line,100000,350     # Connexion Robert-Bourassa vers Manic-5
-L0003,MAN,CHU,735kV_line,100000,400     # Connexion Manic-5 vers Churchill Falls
-L0004,MAN,MAG,315kV_line,75000,200      # Connexion Manic-5 vers Sept-Îles
-L0005,MAN,QBC,735kV_line,100000,450     # Connexion Manic-5 vers Québec
-L0006,QBC,NIC,735kV_line,100000,150     # Connexion Québec vers Nicolet
-L0007,NIC,MTL,735kV_line,100000,100     # Connexion Nicolet vers Montréal
-L0008,MTL,BEA,735kV_line,100000,50      # Connexion Montréal vers Beauharnois
-L0009,BEA,HER,735kV_line,100000,30      # Connexion Beauharnois vers Hertel
-L0010,BEA,CHA,735kV_line,100000,40      # Connexion Beauharnois vers Châteauguay
-L0011,MTL,GAT,315kV_line,75000,200      # Connexion Montréal vers Gatineau
-L0012,QBC,RIM,315kV_line,75000,300      # Connexion Québec vers Rimouski
-L0013,NIC,TRR,315kV_line,75000,50       # Connexion Nicolet vers Trois-Rivières
-L0014,RAD,LAT,315kV_line,75000,400      # Connexion Robert-Bourassa vers La Tuque
-L0015,LAT,TRR,315kV_line,75000,150      # Connexion La Tuque vers Trois-Rivières
+L0001,LG2,RAD,735kV_line,100000,100
+L0002,RAD,MAN,735kV_line,100000,350
+L0003,MAN,CHU,735kV_line,100000,400
+L0004,MAN,MAG,315kV_line,75000,200
+L0005,MAN,QBC,735kV_line,100000,450
+L0006,QBC,NIC,735kV_line,100000,150
+L0007,NIC,MTL,735kV_line,100000,100
+L0008,MTL,BEA,735kV_line,100000,50
+L0009,BEA,HER,735kV_line,100000,30
+L0010,BEA,CHA,735kV_line,100000,40
+L0011,MTL,GAT,315kV_line,75000,200
+L0012,QBC,RIM,315kV_line,75000,300
+L0013,NIC,TRR,315kV_line,75000,50
+L0014,RAD,LAT,315kV_line,75000,400
+L0015,LAT,TRR,315kV_line,75000,150

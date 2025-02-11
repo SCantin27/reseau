@@ -1,3 +1,26 @@
+"""
+Module lines_filter.
+
+Ce module gère le filtrage et la géolocalisation des lignes de transmission.
+Il utilise les fonctions de lecture de fichiers Excel/CSV pour extraire
+des informations sur les lignes et les nœuds du réseau électrique.
+
+Functions:
+    filter_quebec_lines: Filtre les lignes de transmission du Québec.
+    get_unique_nodes: Récupère tous les nœuds uniques.
+    geolocate_nodes: Géolocalise les nœuds en utilisant l'API Nominatim.
+
+Classes:
+    LineFilter: Classe principale pour le filtrage et la géolocalisation.
+
+Example:
+    >>> from network.utils import LineFilter
+    >>> line_filter = LineFilter()
+    >>> line_filter.filter_quebec_lines('input.xlsx', 'quebec_lines.csv')
+    >>> line_filter.get_unique_nodes('quebec_lines.csv', 'unique_nodes.csv')
+    >>> line_filter.geolocate_nodes('unique_nodes.csv', 'geolocated_nodes.csv')
+"""
+
 import pandas as pd
 import requests
 import time
@@ -56,7 +79,6 @@ class LineFilter:
             # Filtrer les lignes du Québec
             quebec_df = df[df['province'] == 'QC']
             
-            # S'assurer que le dossier de sortie existe
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             
             # Exporter en CSV
@@ -102,10 +124,8 @@ class LineFilter:
             all_nodes['used_as_start'] = all_nodes['node_name'].isin(starting_nodes)
             all_nodes['used_as_end'] = all_nodes['node_name'].isin(ending_nodes)
         
-            # S'assurer que le dossier de sortie existe
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
         
-            # Sauvegarder en CSV
             all_nodes.to_csv(output_file, index=False, encoding='utf-8')
         
             print(f"Nombre total de nœuds uniques : {len(all_nodes)}")
@@ -136,13 +156,11 @@ class LineFilter:
         """
         
         try:
-            # Lire le fichier CSV des nœuds
             df = pd.read_csv(input_nodes_file)
             
             # Préparer les colonnes pour les coordonnées
             df['latitude'] = None
             df['longitude'] = None
-            df['geolocation_source'] = None
             
             # API Nominatim
             base_url = "https://nominatim.openstreetmap.org/search"
@@ -196,7 +214,6 @@ class LineFilter:
             #print(f"Nœuds géolocalisés : {geolocated_nodes}")
             #print(f"Pourcentage de réussite : {(geolocated_nodes/total_nodes)*100:.2f}%")
             
-            # S'assurer que le dossier de sortie existe
             os.makedirs(os.path.dirname(output_geolocated_file), exist_ok=True)
             
             # Sauvegarder le résultat

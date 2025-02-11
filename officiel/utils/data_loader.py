@@ -2,8 +2,8 @@
 Module de chargement des données pour le réseau électrique.
 
 Ce module gère le chargement des données statiques et temporelles 
-du réseau électrique d'Hydro-Québec. Il prend en charge la lecture des fichiers JSON
-de configuration du réseau et des séries temporelles de production/consommation.
+du réseau électrique d'Hydro-Québec. Il prend en charge la lecture des fichiers CSV
+pour la configuration du réseau et les séries temporelles de production/consommation.
 
 Functions:
     load_network_data: Charge les données statiques du réseau.
@@ -20,25 +20,34 @@ Example:
     >>> timeseries_data = loader.load_timeseries_data('2024')
 
 Notes:
-    Les données doivent suivre une structure spécifique :
-    - data/network/ : Données statiques (plants.json, lines.json, etc.)
-    - data/timeseries/2024/ : Données temporelles par année
-        - generation/
-            - hydro.json
-            - eolien.json
-            - solar.json
-            - thermal.json
-        - consumption.json
+    Les données doivent suivre la structure suivante :
+    - data/
+        ├── regions/
+        │   └── buses.csv         # Points de connexion du réseau
+        │
+        ├── topology/
+        │   ├── lines/
+        │   │   ├── line_types.csv    # Types de lignes standard
+        │   │   └── lines.csv         # Lignes de transmission
+        │   │
+        │   └── centrales/
+        │       ├── carriers.csv      # Types de production
+        │       └── generators.csv     # Caractéristiques des centrales
+        │
+        └── timeseries/
+            └── 2024/
+                ├── generation/
+                │   └── generators-p_max_pu.csv  # Production maximale par unité
+                └── loads-p_set.csv              # Profils de charge
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
                 Add Contributor here
 """
 
-import json
+import pypsa
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Union, Optional
-from dataclasses import dataclass
+from typing import Optional
 
 
 class DataLoadError(Exception):
@@ -46,32 +55,15 @@ class DataLoadError(Exception):
     pass
 
 
-@dataclass
-class NetworkData:
-    """
-    Structure de données pour les composants statiques du réseau.
-
-    Attributes:
-        plants (Dict): Données des centrales électriques
-        lines (Dict): Données des lignes de transmission
-        substations (Dict): Données des postes électriques
-    """
-    plants: Dict
-    lines: Dict
-    substations: Dict
-
-
 class NetworkDataLoader:
     """
     Gestionnaire de chargement des données du réseau.
 
-    Cette classe s'occupe de charger et valider les données nécessaires
-    à la construction et à la simulation du réseau électrique.
+    Cette classe utilise les fonctionnalités natives de PyPSA pour charger
+    les données du réseau à partir des fichiers CSV.
 
     Attributes:
         data_dir (Path): Chemin vers le répertoire des données
-        network_dir (Path): Sous-répertoire des données statiques
-        timeseries_dir (Path): Sous-répertoire des données temporelles
     """
 
     def __init__(self, data_dir: str = "data"):
@@ -83,99 +75,99 @@ class NetworkDataLoader:
                 Defaults to "data".
 
         Raises:
-            DataLoadError: Si le répertoire n'existe pas ou n'est pas accessible.
+            DataLoadError: Si le répertoire n'existe pas.
         """
         self.data_dir = Path(data_dir)
-        self.network_dir = self.data_dir / "network"
-        self.timeseries_dir = self.data_dir / "timeseries"
-
         if not self.data_dir.exists():
             raise DataLoadError(f"Le répertoire {data_dir} n'existe pas")
 
-    def load_network_data(self) -> NetworkData:
+    def load_network_data(self) -> pypsa.Network:
         """
         Charge les données statiques du réseau.
 
+        Cette méthode charge la topologie du réseau (buses, lignes, générateurs)
+        en utilisant la fonction native de PyPSA import_from_csv_folder.
+
         Returns:
-            NetworkData: Structure contenant les données du réseau.
+            pypsa.Network: Réseau PyPSA configuré avec les données statiques.
 
         Raises:
-            DataLoadError: Si un fichier est manquant ou mal formaté.
+            DataLoadError: Si les données sont inaccessibles ou mal formatées.
         """
         try:
-            plants = self._load_json_file(self.network_dir / "plants.json")
-            lines = self._load_json_file(self.network_dir / "lines.json")
-            substations = self._load_json_file(self.network_dir / "substations.json")
+            network = pypsa.Network()
             
-            return NetworkData(
-                plants=plants,
-                lines=lines,
-                substations=substations
-            )
+            # Chargement des données régionales (buses)
+            buses_df = pd.read_csv(self.data_dir / "regions" / "buses.csv")
+            buses_df = buses_df.set_index('name')
+            for idx, row in buses_df.iterrows():
+                network.add("Bus", name=idx, **row.to_dict())
+            
+            # Chargement des lignes
+            line_types_df = pd.read_csv(self.data_dir / "topology" / "lines" / "line_types.csv")
+            line_types_df = line_types_df.set_index('name')
+            for idx, row in line_types_df.iterrows():
+                network.add("LineType", name=idx, **row.to_dict())
+            
+            lines_df = pd.read_csv(self.data_dir / "topology" / "lines" / "lines.csv")
+            lines_df = lines_df.set_index('name')
+            for idx, row in lines_df.iterrows():
+                network.add("Line", name=idx, **row.to_dict())
+
+            # Chargement des générateurs 
+            carriers_df = pd.read_csv(self.data_dir / "topology" / "centrales" / "carriers.csv")
+            carriers_df = carriers_df.set_index('name')
+            for idx, row in carriers_df.iterrows():
+                network.add("Carrier", name=idx, **row.to_dict())
+
+            generators_df = pd.read_csv(self.data_dir / "topology" / "centrales" / "generators.csv")
+            generators_df = generators_df.set_index('name')
+            for idx, row in generators_df.iterrows():
+                network.add("Generator", name=idx, **row.to_dict())
+            
+            return network
+            
         except Exception as e:
             raise DataLoadError(f"Erreur lors du chargement des données: {str(e)}")
 
     def load_timeseries_data(self, 
+                           network: pypsa.Network,
                            year: str,
                            start_date: Optional[str] = None,
-                           end_date: Optional[str] = None) -> Dict:
+                           end_date: Optional[str] = None) -> pypsa.Network:
         """
-        Charge les données temporelles pour une année spécifique.
+        Ajoute les données temporelles au réseau.
 
         Args:
+            network: Réseau PyPSA à compléter avec les données temporelles
             year: Année des données (ex: '2024')
             start_date: Date de début au format 'YYYY-MM-DD' (optionnel)
             end_date: Date de fin au format 'YYYY-MM-DD' (optionnel)
 
         Returns:
-            Dict contenant les données temporelles de production et consommation
+            pypsa.Network: Réseau avec les données temporelles ajoutées
 
         Raises:
             DataLoadError: Si les données sont inaccessibles ou mal formatées
         """
-        year_dir = self.timeseries_dir / year
         try:
-            # Chargement des données de production par type
-            generation = {}
-            for gen_type in ['hydro', 'eolien', 'solar', 'thermal']:
-                file_path = year_dir / "generation" / f"{gen_type}.json"
-                generation[gen_type] = self._load_json_file(file_path)
+            # Chargement des séries temporelles pour les charges (loads)
+            loads_path = self.data_dir / "timeseries" / year / "loads-p_set.csv"
+            loads_df = pd.read_csv(loads_path, index_col=0, parse_dates=True)
+            network.loads_t.p_set = loads_df
 
-            # Chargement des données de consommation (à confirmer avec l'équipe 09)
-            consumption = self._load_json_file(year_dir / "consumption.json")
-
-            # Filtrage temporel si nécessaire
-            if start_date and end_date:
-                # Logique de filtrage à implémenter
-                pass
-
-            return {
-                "generation": generation,
-                "consumption": consumption
-            }
-
+            
+            # Chargement des coûts marginaux des générateurs
+            gen_path = self.data_dir / "timeseries" / year / "generation" / "generators-marginal_cost.csv"
+            gen_df = pd.read_csv(gen_path, index_col=0, parse_dates=True)
+            network.generators_t.marginal_cost = gen_df
+            
+            # Définition des snapshots
+            network.set_snapshots(loads_df.index)
+            
+            return network
+            
         except Exception as e:
             raise DataLoadError(
                 f"Erreur lors du chargement des données temporelles: {str(e)}"
             )
-
-    def _load_json_file(self, file_path: Path) -> Dict:
-        """
-        Charge un fichier JSON.
-
-        Args:
-            file_path: Chemin vers le fichier JSON
-
-        Returns:
-            Dict: Contenu du fichier JSON
-
-        Raises:
-            DataLoadError: Si le fichier est inaccessible ou mal formaté
-        """
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            raise DataLoadError(f"Fichier non trouvé: {file_path}")
-        except json.JSONDecodeError as e:
-            raise DataLoadError(f"Erreur de format JSON dans {file_path}: {str(e)}")
