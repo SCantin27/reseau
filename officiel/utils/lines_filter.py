@@ -177,9 +177,7 @@ class LineFilter:
                 
                 # Préparer les paramètres de la requête
                 params = {
-                    'q': node_name,
-                    'country_code': 'ca',
-                    'state_code': 'qc',
+                    'q':node_name + ", Québec",
                     'format': 'json',               
                     'limit': 1  # On prend que le premier résultat
                 }
