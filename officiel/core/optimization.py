@@ -1,24 +1,23 @@
 """
-Module d'optimisation du réseau électrique pour PyPSA.
+Module d'optimisation du réseau électrique.
 
-Ce module implémente les fonctionnalités d'optimisation pour le réseau électrique
-d'Hydro-Québec. Il permet d'optimiser la répartition des flux de puissance en tenant
-compte des contraintes du réseau, des pertes, et des limites de transmission.
-
-Classes:
-    NetworkOptimizer: Classe principale pour l'optimisation du réseau.
-    OptimizationConstraints: Classe pour la gestion des contraintes.
-    PowerFlowResults: Classe pour l'analyse des résultats d'optimisation.
+Ce module gère l'optimisation de la production électrique en utilisant PyPSA.
+L'optimisation est basée sur :
+- Les coûts marginaux des centrales pilotables (réservoirs, thermique)
+- La disponibilité des centrales non-pilotables (fil de l'eau, éolien, solaire)
+- Les contraintes du réseau de transport
 
 Example:
     >>> from network.core import NetworkOptimizer
     >>> optimizer = NetworkOptimizer(network)
-    >>> results = optimizer.optimize_power_flow()
-    >>> print(f"Pertes totales: {results.total_losses} MW")
+    >>> network = optimizer.optimize()
+    >>> results = optimizer.get_optimization_results()
 
 Notes:
-    L'optimisation utilise les solveurs de PyPSA et peut être configurée
-    pour différents objectifs.
+    L'optimisation utilise :
+    - generators-p_max_pu.csv pour les contraintes des non-pilotables
+    - generators-marginal_cost.csv pour le pilotage des réservoirs
+    - Les contraintes de réseau définies dans lines.csv
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
                 Add Contributor here
@@ -26,78 +25,133 @@ Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
 
 import pypsa
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
-from ..utils.time_utils import TimeSeriesManager
+from typing import Dict, Optional, Tuple
+from datetime import datetime
+
 
 class NetworkOptimizer:
     """
-    Classe principale pour l'optimisation du réseau électrique.
+    Optimiseur du réseau électrique.
     
-    Cette classe gère l'optimisation du réseau électrique d'Hydro-Québec.
-    Elle prend en compte les contraintes physiques du réseau et les limites
-    opérationnelles.
+    Cette classe gère l'optimisation de la production en minimisant les coûts
+    tout en respectant les contraintes du réseau. Elle utilise les coûts marginaux
+    pour piloter les centrales à réservoir.
 
     Attributes:
-        network (pypsa.Network): Réseau PyPSA à optimiser.
-        solver_name (str): Nom du solveur à utiliser (ex: 'glpk', 'cplex').
-        solver_options (dict): Options de configuration du solveur.
-        constraints (OptimizationConstraints): Gestionnaire des contraintes.
-
-    Note:
-        Les résultats d'optimisation sont stockés dans network.optimization.status
-        après l'exécution.
+        network (pypsa.Network): Réseau à optimiser
+        solver_name (str): Solveur à utiliser
+        solver_options (dict): Options de configuration du solveur
     """
 
-    def __init__(self, network: pypsa.Network, solver_name: str = "glpk"):
- 
-        self.network = network
-        self.solver_name = solver_name
-        self.solver_options = {}
-        self.constraints = OptimizationConstraints()
-
-    def optimize_power_flow(self, objective: str = "min_loss",snapshot: Optional[str] = None) -> PowerFlowResults:
+    def __init__(self, network: pypsa.Network, solver_name: str = "highs"):
         """
-        Optimise le flux de puissance dans le réseau.
-
-        Exécute l'optimisation du flux de puissance selon l'objectif spécifié.
-        Peut fonctionner sur un snapshot unique ou sur toute la période temporelle.
+        Initialise l'optimiseur.
 
         Args:
-            objective (str, optional): Objectif de l'optimisation.
-                Peut être 'min_loss' ou 'min_cost'. Defaults to "min_loss".
-            snapshot (str, optional): Timestamp spécifique pour l'optimisation.
-                Si None, optimise sur toute la période. Defaults to None.
+            network: Réseau PyPSA à optimiser
+            solver_name: Nom du solveur linéaire à utiliser ('highs' par défaut)
+        """
+        self.network = network
+        self.solver_name = solver_name
+
+    def optimize(self) -> pypsa.Network:
+        """
+        Exécute l'optimisation du réseau.
+
+        Cette méthode optimise la production en minimisant les coûts totaux,
+        en respectant :
+        - La disponibilité des sources non-pilotables (p_max_pu)
+        - Les coûts marginaux des sources pilotables
+        - Les contraintes de transport
 
         Returns:
-            PowerFlowResults: Résultats de l'optimisation.
+            Le réseau avec les résultats d'optimisation
 
         Raises:
-            OptimizationError: Si l'optimisation échoue.
-            ValueError: Si l'objectif spécifié est invalide.
-
-        Example:
-            >>> optimizer = NetworkOptimizer(network)
-            >>> results = optimizer.optimize_power_flow(objective="min_loss")
-            >>> print(f"Pertes minimisées: {results.total_losses} MW")
+            RuntimeError: Si l'optimisation échoue
         """
-        pass  # Implémentation à suivre
+        try:
+            # Configuration de l'optimisation
+            self.network.optimize.load_shedding = False
+            self.network.optimize.noisy_costs = True
+            
+            # Lance l'optimisation
+            status = self.network.optimize(
+                solver_name=self.solver_name
+            )
+            
+            if status != "ok":
+                raise RuntimeError(f"Optimisation échouée avec statut: {status}")
+            
+            return self.network
+            
+        except Exception as e:
+            raise RuntimeError(f"Erreur lors de l'optimisation: {str(e)}")
 
-class OptimizationConstraints:
-    """
-    Gestion des contraintes pour l'optimisation du réseau.
+    def get_optimization_results(self) -> Dict:
+        """
+        Récupère les résultats détaillés de l'optimisation.
 
-    Cette classe définit et gère les différentes contraintes appliquées
-    lors de l'optimisation du réseau électrique.
-    """
-    pass  # Implémentation à suivre
+        Returns:
+            Dict contenant :
+            - Production par type de centrale
+            - Coûts totaux
+            - Statistiques d'utilisation des réservoirs
+            - Contraintes actives
+        """
+        if not hasattr(self.network, 'objective'):
+            raise RuntimeError("Aucun résultat d'optimisation disponible")
 
+        # Sépare les générateurs par type
+        pilotable_gens = self.network.generators[
+            self.network.generators.carrier.isin(['hydro_reservoir', 'thermique'])
+        ].index
+        non_pilotable_gens = self.network.generators[
+            self.network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
+        ].index
 
-class PowerFlowResults:
-    """
-    Analyse et stockage des résultats d'optimisation.
+        results = {
+            # Résultats globaux
+            "status": getattr(self.network, 'status', 'unknown'),
+            "objective_value": float(self.network.objective),
+            "total_cost": float(self.network.objective),
+            
+            # Production par type
+            "pilotable_production": self.network.generators_t.p[pilotable_gens].sum(),
+            "non_pilotable_production": self.network.generators_t.p[non_pilotable_gens].sum(),
+            
+            # Statistiques par carrier
+            "production_by_type": self.network.generators_t.p.groupby(
+                self.network.generators.carrier, axis=1
+            ).sum(),
+            
+            # Contraintes actives
+            "line_loading_max": self.network.lines_t.p0.abs().max(),
+            "n_active_line_constraints": (
+                self.network.lines_t.p0.abs() > 0.99 * self.network.lines.s_nom
+            ).sum().sum()
+        }
+        
+        return results
 
-    Cette classe fournit des méthodes pour analyser et visualiser
-    les résultats de l'optimisation du flux de puissance.
-    """
-    pass  # Implémentation à suivre
+    def check_optimization_feasibility(self) -> Tuple[bool, str]:
+        """
+        Vérifie si l'optimisation est faisable.
+
+        Returns:
+            Tuple[faisable, message]: Statut de faisabilité et message explicatif
+        """
+        try:
+            # Vérifie la capacité totale
+            total_capacity = self.network.generators.p_nom.sum()
+            max_load = self.network.loads_t.p_set.sum(axis=1).max()
+            
+            if total_capacity < max_load:
+                return False, f"Capacité insuffisante: {total_capacity:.0f} MW < {max_load:.0f} MW"
+                       
+            return True, "Optimisation faisable"
+            
+        except Exception as e:
+            return False, f"Erreur lors de la vérification: {str(e)}"
+    
+    # Add new method here

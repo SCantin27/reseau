@@ -3,6 +3,7 @@ from .validators import NetworkValidator
 from .geo_utils import GeoUtils
 from .time_utils import TimeSeriesManager
 from .lines_filter import LineFilter
+from .visualization_utils import NetworkVisualizer
 
 __all__ = [
     'NetworkDataLoader',
@@ -11,4 +12,5 @@ __all__ = [
     'GeoUtils',
     'TimeSeriesManager',
     'LineFilter'
+    'NetworkVisualizer'
 ]

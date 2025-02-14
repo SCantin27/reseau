@@ -56,3 +56,5 @@ class NetworkValidator:
             return True
         except Exception as e:
             raise DataLoadError(f"Validation du réseau échouée: {str(e)}")
+        
+    # Add new method here

@@ -9,7 +9,8 @@ geopandas>=0.13.0
 
 # Visualisation
 matplotlib>=3.7.0
-plotly>=5.13.0  
+plotly>=5.13.0
+seaborn>=0.13.2  
 
 # Gestion des données
 openpyxl>=3.1.0
@@ -25,6 +26,11 @@ pytest-cov>=4.0.0
 
 # Documentation
 sphinx>=7.1.0
-sphinx-rtd-theme>=1.2.0 
+sphinx-rtd-theme>=1.2.0
+
+# Solveurs d'optimisation
+highspy>=1.5.1
+
+
 
 

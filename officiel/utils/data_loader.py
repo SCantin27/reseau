@@ -32,12 +32,14 @@ Notes:
         │   │
         │   └── centrales/
         │       ├── carriers.csv      # Types de production
-        │       └── generators.csv     # Caractéristiques des centrales
+        │       ├── generators_non_pilotable.csv     # Caractéristiques des centrales non pilotables
+        │       └── generators_pilotable.csv     # Caractéristiques des centrales pilotables
         │
         └── timeseries/
             └── 2024/
                 ├── generation/
-                │   └── generators-p_max_pu.csv  # Production maximale par unité
+                │   ├── generators-p_max_pu.csv  # Production maximale par unité pour les centrales non pilotables
+                │   └── generators-marginal_cost.csv # Coûts marginaux pour les centrales pilotables
                 └── loads-p_set.csv              # Profils de charge
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
@@ -100,8 +102,20 @@ class NetworkDataLoader:
             # Chargement des données régionales (buses)
             buses_df = pd.read_csv(self.data_dir / "regions" / "buses.csv")
             buses_df = buses_df.set_index('name')
+            
+            # Création des bus
             for idx, row in buses_df.iterrows():
                 network.add("Bus", name=idx, **row.to_dict())
+                
+                # Création des charges pour les bus de type "conso"
+                if row['type'] == 'conso':
+                    network.add("Load", 
+                              name=f"load_{idx}",
+                              bus=idx,
+                              # Valeurs par défaut qui seront écrasées par les séries temporelles
+                              p_set=0,  
+                              q_set=0
+                    )
             
             # Chargement des lignes
             line_types_df = pd.read_csv(self.data_dir / "topology" / "lines" / "line_types.csv")
@@ -185,3 +199,5 @@ class NetworkDataLoader:
             raise DataLoadError(
                 f"Erreur lors du chargement des données temporelles: {str(e)}"
             )
+        
+    # Add new method here

@@ -1,29 +1,27 @@
 """
-Module de construction du réseau électrique pour PyPSA.
+Module principal pour la construction et l'analyse du réseau électrique.
 
-Ce module fournit les classes et méthodes nécessaires pour construire et configurer
-un réseau électrique dans PyPSA à partir des données d'Hydro-Québec. Il gère la création
-des composants du réseau (bus, lignes, générateurs, charges) et leur paramétrage pour
-les simulations de flux de puissance.
-
-Classes:
-    NetworkBuilder: Classe principale pour la construction du réseau PyPSA.
-    NetworkComponent: Classe de base pour les composants du réseau.
-    TransmissionLine: Classe pour la gestion des lignes de transmission.
-    Add other classes here
-
+Ce module orchestre la construction, l'optimisation et l'analyse du réseau
+électrique d'Hydro-Québec en utilisant PyPSA. Il coordonne l'utilisation
+des différents composants (chargement des données, optimisation, calculs 
+de flux de puissance).
 
 Example:
-    >>> from network.core import NetworkBuilder, run_power_flow
+    >>> from network.core import NetworkBuilder
     >>> builder = NetworkBuilder()
-    >>> network = builder.build_network()
-    >>> network.pf()  # Exécute un calcul de flux de puissance
+    >>> network = builder.create_network("2024")
+    >>> network = builder.optimize_network(network)
+    >>> results = builder.analyze_results(network)
 
 Notes:
-    Le module attend une structure spécifique des données d'entrée, notamment :
-    - Données des centrales dans data/network/plants.json
-    - Données des lignes dans data/network/lines.json
-    - Séries temporelles dans data/timeseries/
+    Le réseau est construit à partir des données CSV organisées comme suit :
+    - data/
+        ├── regions/          # Points de connexion (buses.csv)
+        ├── topology/         # Structure du réseau
+        │   ├── lines/        # Lignes de transmission
+        │   └── centrales/    # Générateurs et types
+        └── timeseries/       # Données temporelles
+            └── 2024/         # Année considérée
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
                 Add Contributor here
@@ -32,65 +30,178 @@ Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
 import pypsa
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional, Union
-from ..utils.data_loader import NetworkDataLoader
-from ..utils.validators import NetworkValidator
-from ..utils.geo_utils import GeoUtils
-from ..utils.time_utils import TimeSeriesManager
+from typing import Dict, Optional, Tuple
+from datetime import datetime
+
+from utils import NetworkDataLoader
+from .optimization import NetworkOptimizer
+from .power_flow import PowerFlowAnalyzer
 
 
 class NetworkBuilder:
     """
-    Classe principale pour la construction et la configuration du réseau électrique.
+    Classe principale pour l'orchestration du modèle de réseau électrique.
     
-    Cette classe gère la création d'un réseau PyPSA complet à partir des données
-    d'Hydro-Québec. Elle s'occupe de l'initialisation des composants, de leur
-    paramétrage et de la validation de la topologie du réseau.
+    Cette classe coordonne les différentes étapes de la modélisation :
+    - Construction du réseau à partir des données CSV
+    - Optimisation de la production
+    - Calculs de flux de puissance
+    - Analyse des résultats
 
     Attributes:
-        network (pypsa.Network): Instance du réseau PyPSA.
-        data_loader (NetworkDataLoader): Gestionnaire de chargement des données.
-        validator (NetworkDataValidator): Validateur des données réseau.
-        time_manager (TimeSeriesManager): Gestionnaire des séries temporelles.
-
+        data_loader (NetworkDataLoader): Gestionnaire de chargement des données
+        current_network (pypsa.Network): Réseau PyPSA en cours d'analyse
     """
 
     def __init__(self, data_dir: str = "data"):
-        self.network = pypsa.Network()
-        self.data_loader = NetworkDataLoader(data_dir)
-        self.validator = NetworkValidator()
-        self.time_manager = TimeSeriesManager(data_dir)
-
-    def build_network(self, start_date: str = None, end_date: str = None) -> pypsa.Network:
         """
-        Construit le réseau complet avec tous ses composants.
-
-        Cette méthode orchestre la construction complète du réseau en appelant
-        les différentes méthodes de création des composants dans le bon ordre.
+        Initialise le constructeur de réseau.
 
         Args:
-            start_date (str, optional): Date de début au format 'YYYY-MM-DD'.
-                Defaults to None.
-            end_date (str, optional): Date de fin au format 'YYYY-MM-DD'.
-                Defaults to None.
+            data_dir: Chemin vers le répertoire des données
+        """
+        self.data_loader = NetworkDataLoader(data_dir)
+        self.current_network = None
+
+    def create_network(self, year: str,
+                      start_date: Optional[str] = None,
+                      end_date: Optional[str] = None) -> pypsa.Network:
+        """
+        Crée et configure le réseau à partir des données CSV.
+
+        Args:
+            year: Année des données (ex: '2024')
+            start_date: Date de début optionnelle
+            end_date: Date de fin optionnelle
 
         Returns:
-            pypsa.Network: Le réseau configuré et prêt pour les simulations.
-
-        Raises:
-            NetworkConfigurationError: Si la construction du réseau échoue.
+            network: Réseau PyPSA configuré
 
         Example:
-            >>> builder = NetworkBuilder()
-            >>> network = builder.build_network('2024-01-01', '2024-12-31')
-            >>> network.pf()
+            >>> network = builder.create_network('2024')
+            >>> network = builder.create_network('2024', '2024-01-01', '2024-12-31')
         """
-        pass  # Implémentation à suivre
+        # Chargement des données statiques
+        network = self.data_loader.load_network_data()
+        
+        # Ajout des séries temporelles
+        network = self.data_loader.load_timeseries_data(
+            network, year, start_date, end_date
+        )
+        
+        self.current_network = network
+        return network
 
-class NetworkComponent:
-    """Classe de base pour les composants du réseau électrique."""
-    pass  # Implémentation à suivre
+    def optimize_network(self, 
+                        network: Optional[pypsa.Network] = None,
+                        solver_name: str = "highs") -> pypsa.Network:
+        """
+        Optimise la production sur le réseau.
 
-class TransmissionLine:
-    """Classe pour la gestion des lignes de transmission."""
-    pass  # Implémentation à suivre
+        Args:
+            network: Réseau à optimiser (utilise current_network si None)
+            solver_name: Solveur à utiliser pour l'optimisation
+
+        Returns:
+            network: Réseau avec les résultats d'optimisation
+        """
+        if network is None:
+            network = self.current_network
+            
+        if network is None:
+            raise ValueError("Aucun réseau disponible pour l'optimisation")
+
+        optimizer = NetworkOptimizer(network, solver_name)
+        network = optimizer.optimize()
+        
+        self.current_network = network
+        return network
+
+    def run_power_flow(self,
+                    network: Optional[pypsa.Network] = None,
+                    mode: str = "dc") -> Tuple[pypsa.Network, Dict]:
+        """
+        Exécute un calcul de flux de puissance et analyse les résultats.
+
+        Args:
+            network: Réseau à analyser (utilise current_network si None)
+            mode: Type de calcul ('ac' ou 'dc')
+
+        Returns:
+            Tuple[network, results]: Réseau et résultats d'analyse
+
+        Raises:
+            ValueError: Si aucun réseau n'est disponible
+        """
+        if network is None:
+            network = self.current_network
+            
+        if network is None:
+            raise ValueError("Aucun réseau disponible pour le calcul")
+
+        # Création de l'analyseur
+        analyzer = PowerFlowAnalyzer(network, mode=mode)
+        
+        # Calcul du load flow
+        success = analyzer.run_power_flow()
+        
+        if not success:
+            raise RuntimeError("Le calcul de flux de puissance a échoué")
+        
+        # Collecte des résultats
+        results = {
+            "line_loading": analyzer.get_line_loading(),
+            "critical_lines": analyzer.get_critical_lines(),
+            "losses": analyzer.analyze_network_losses()
+        }
+        
+        # Ajoute les résultats de tension si en mode AC
+        if mode == "ac":
+            results["voltage_profile"] = analyzer.get_voltage_profile()
+        
+        self.current_network = network
+        return network, results
+
+    def analyze_results(self, 
+                    network: Optional[pypsa.Network] = None) -> Dict:
+        """
+        Analyse complète des résultats de simulation.
+
+        Args:
+            network: Réseau à analyser (utilise current_network si None)
+
+        Returns:
+            Dict: Ensemble des résultats d'analyse
+
+        Note:
+            Cette méthode suppose qu'un calcul de flux a déjà été effectué
+        """
+        if network is None:
+            network = self.current_network
+            
+        if network is None:
+            raise ValueError("Aucun réseau disponible pour l'analyse")
+
+        analyzer = PowerFlowAnalyzer(network, mode="dc")  # mode par défaut
+        
+        results = {
+            # Résultats des flux de puissance
+            "technical_analysis": {
+                "line_loading": analyzer.get_line_loading(),
+                "critical_lines": analyzer.get_critical_lines(),
+                "losses": analyzer.analyze_network_losses()
+            },
+            
+            # Bilans énergétiques
+            "energy_balance": {
+                "total_generation": network.generators_t.p.sum().sum(),
+                "total_load": network.loads_t.p.sum().sum(),
+                "generation_by_type": network.generators_t.p.groupby(
+                    network.generators.carrier, axis=1
+                ).sum().sum()
+            }
+        }
+        
+        return results
+    
+    # Add new method here

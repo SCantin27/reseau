@@ -118,3 +118,5 @@ class GeoUtils:
         for i in range(len(points) - 1):
             total_length += self.calculate_distance(points[i], points[i + 1])
         return total_length
+    
+    # Add new method here

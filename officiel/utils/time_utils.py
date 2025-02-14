@@ -35,7 +35,7 @@ class TimeSeriesManager:
 
         Args:
             network: Réseau PyPSA à analyser
-            periosd: Période à analyser (format 'YYYY-MM' ou 'YYYY')
+            period: Période à analyser (format 'YYYY-MM' ou 'YYYY')
 
         Returns:
             Series avec les timestamps des pics et leurs valeurs
@@ -61,11 +61,22 @@ class TimeSeriesManager:
         loads.index = pd.to_datetime(loads.index)
         loads['season'] = loads.index.quarter
 
+        # Distingue les générateurs pilotables et non-pilotables
+        non_pilotable_gens = network.generators[
+            network.generators.carrier.isin(['hydro_fil', 'eolien', 'solaire'])
+        ].index
+        pilotable_gens = network.generators[
+            network.generators.carrier.isin(['hydro_reservoir', 'thermique'])
+        ].index
+
         # Calcule les moyennes par saison
         seasonal_means = {
             'load': loads.groupby('season').mean(),
-            'generation': network.generators_t.p_max_pu.groupby(
+            'non_pilotable_generation': network.generators_t.p_max_pu[non_pilotable_gens].groupby(
                 pd.to_datetime(network.generators_t.p_max_pu.index).quarter
+            ).mean(),
+            'pilotable_marginal_cost': network.generators_t.marginal_cost[pilotable_gens].groupby(
+                pd.to_datetime(network.generators_t.marginal_cost.index).quarter
             ).mean()
         }
         
@@ -79,25 +90,49 @@ class TimeSeriesManager:
 
         Args:
             network: Réseau PyPSA
-            carrier: Type de production à analyser (hydro_fil, hydro_reservoir, etc.)
+            carrier: Type de production à analyser
 
         Returns:
             DataFrame avec les statistiques de production
         """
+        production_stats = pd.DataFrame()
+        
         if carrier:
-            gens = network.generators[network.generators.carrier == carrier].index
-            production = network.generators_t.p_max_pu[gens]
+            if carrier in ['hydro_fil', 'eolien', 'solaire']:
+                gens = network.generators[network.generators.carrier == carrier].index
+                data = network.generators_t.p_max_pu[gens]
+            else:  # carriers pilotables
+                gens = network.generators[network.generators.carrier == carrier].index
+                data = network.generators_t.marginal_cost[gens]
         else:
-            production = network.generators_t.p_max_pu
+            # Combine les deux types de données
+            non_pilotable_data = network.generators_t.p_max_pu
+            pilotable_data = network.generators_t.marginal_cost
+            data = pd.concat([non_pilotable_data, pilotable_data], axis=1)
 
         # Ajout de colonnes temporelles pour l'analyse
-        production_stats = pd.DataFrame()
-        production_stats['hour'] = production.index.hour
-        production_stats['month'] = production.index.month
-        production_stats['weekday'] = production.index.weekday
-        production_stats['production'] = production.mean(axis=1)
+        production_stats['hour'] = data.index.hour
+        production_stats['month'] = data.index.month
+        production_stats['weekday'] = data.index.weekday
+        production_stats['value'] = data.mean(axis=1)
 
         return production_stats
+
+    @staticmethod
+    def check_temporal_consistency(network: pypsa.Network) -> bool:
+        """
+        Vérifie la cohérence temporelle des données.
+
+        Returns:
+            bool: True si toutes les séries temporelles sont cohérentes
+        """
+        # Récupère tous les timestamps
+        load_times = set(network.loads_t.p_set.index)
+        non_pilotable_times = set(network.generators_t.p_max_pu.index)
+        pilotable_times = set(network.generators_t.marginal_cost.index)
+        
+        # Vérifie que tous les timestamps correspondent
+        return load_times == non_pilotable_times == pilotable_times
 
     @staticmethod
     def get_time_resolution(network: pypsa.Network) -> str:
@@ -112,17 +147,5 @@ class TimeSeriesManager:
         
         diff = network.snapshots[1] - network.snapshots[0]
         return str(diff)
-
-    @staticmethod
-    def check_temporal_consistency(network: pypsa.Network) -> bool:
-        """
-        Vérifie la cohérence temporelle des données.
-
-        Returns:
-            bool: True si toutes les séries temporelles sont cohérentes
-        """
-        # Vérifie que toutes les séries ont les mêmes timestamps
-        load_times = set(network.loads_t.p_set.index)
-        gen_times = set(network.generators_t.p_max_pu.index)
-        
-        return load_times == gen_times
+    
+    # Add new method here

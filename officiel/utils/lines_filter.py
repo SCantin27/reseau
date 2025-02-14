@@ -223,6 +223,8 @@ class LineFilter:
         except Exception as e:
             print(f"Une erreur est survenue : {str(e)}")
 
+    # Add new method here
+
 
 if __name__ == "__main__":
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
