@@ -178,7 +178,9 @@ class LineFilter:
                 # Préparer les paramètres de la requête
                 params = {
                     'q': node_name,
-                    'format': 'json',
+                    'country_code': 'ca',
+                    'state_code': 'qc',
+                    'format': 'json',               
                     'limit': 1  # On prend que le premier résultat
                 }
                 
@@ -237,10 +239,10 @@ if __name__ == "__main__":
     
     line_filter = LineFilter()
     
-    # Exécuter le filtrage des lignes du Québec
-    line_filter.filter_quebec_lines(input_file, output_quebec_file)
+    # # Exécuter le filtrage des lignes du Québec
+    # line_filter.filter_quebec_lines(input_file, output_quebec_file)
     
-    # Exporter les nœuds uniques
-    line_filter.get_unique_nodes(output_quebec_file, output_nodes_file)
+    # # Exporter les nœuds uniques
+    # line_filter.get_unique_nodes(output_quebec_file, output_nodes_file)
 
     line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
