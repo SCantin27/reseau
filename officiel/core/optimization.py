@@ -76,9 +76,7 @@ class NetworkOptimizer:
             self.network.optimize.noisy_costs = True
             
             # Lance l'optimisation
-            status = self.network.optimize(
-                solver_name=self.solver_name
-            )
+            status, termination_condition = self.network.optimize(solver_name=self.solver_name)
             
             if status != "ok":
                 raise RuntimeError(f"Optimisation échouée avec statut: {status}")
@@ -129,7 +127,9 @@ class NetworkOptimizer:
             "line_loading_max": self.network.lines_t.p0.abs().max(),
             "n_active_line_constraints": (
                 self.network.lines_t.p0.abs() > 0.99 * self.network.lines.s_nom
-            ).sum().sum()
+            ).sum().sum(),
+            "global_constraints": self.network.global_constraints if hasattr(self.network, "global_constraints") else None
+            
         }
         
         return results

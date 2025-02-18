@@ -1,180 +1,184 @@
-# Structure du Module Réseau
+# Architecture du Modèle de Réseau Électrique Québécois
 
-## 1. Dossier DATA/
+Ce document explique l'architecture et l'organisation du module reseau (network). Il servira de guide pour comprendre la structure du modèle et savoir où trouver les différentes fonctionnalités.
 
-### network/
-**Rôle** : Stockage des données statiques du réseau  
-**Contenu** :  
-- `plants.json` : Données des centrales
-  ```json
-  {
-    "id": "BEA",
-    "name": "Beauharnois",
-    "nominal_power": 1912,
-    "coordinates": [45.3119, -73.9128],
-    "voltage": 735
-  }
-  ```
-- `lines.json` : Données des lignes de transmission
-  ```json
-  {
-    "id": "L7040",
-    "voltage": 735,
-    "from_bus": "BEA",
-    "to_bus": "HER",
-    "length": 150.5,
-    "num_parallel": 2,
-    "resistance": 0.0001,
-    "reactance": 0.001
-  }
-  ```
-- `substations.json` : Données des postes électriques
-- `load_zones.json` : Zones de consommation
+## Vue d'ensemble
 
-**Utilisation** : 
-- Base pour la construction du réseau dans PyPSA
-- Référence pour les analyses de flux de puissance
+Le projet est organisé en plusieurs modules principaux :
 
-### timeseries/
-**Rôle** : Stockage des données variables dans le temps  
-**Contenu** :
-- `consumption/` : Profils de consommation par zone (données horaires)
-- `generation/` : Profils de production des centrales (données horaires)
+```
+network/
+├── core/           # Fonctionnalités principales du réseau
+├── utils/          # Utilitaires et outils de support
+├── tests/          # Tests unitaires et d'intégration
+├── data/           # Données du réseau
+├── main_core.py    # Script principal pour les fonctionnalités core
+└── main_utils.py   # Script principal pour les utilitaires
+```
 
-**Utilisation** : 
-- Données d'entrée pour les simulations temporelles
-- Analyse des flux de puissance variables
+## 🎯 Modules Principaux
 
-## 2. Dossier CORE/
+### 1. Core (`/core`)
 
-### __init__.py
-**Rôle** : Définir le package core  
-**Contenu** :
-- Imports des classes principales
-- Définition des exports
+Ce module contient les fonctionnalités essentielles du réseau électrique.
 
-**Utilisation** :
-- Organisation du package
-- Simplification des imports
+#### Fichiers principaux :
 
-### network_builder.py
-**Rôle** : Construction du réseau PyPSA  
-**Contenu** :
-- Classe NetworkBuilder
-- Création des composants réseau
-- Intégration des données temporelles
+- **network_builder.py** : Point d'entrée principal pour créer et configurer le réseau
+  - `NetworkBuilder` : Classe principale pour construire le réseau
+  - Utilisez ce fichier pour créer un nouveau réseau ou modifier sa configuration
 
-**Utilisation** :
-- Point d'entrée pour la création du réseau
-- Construction du modèle PyPSA
+- **optimization.py** : Gestion de l'optimisation du réseau
+  - `NetworkOptimizer` : Optimise la production électrique
+  - Calcule la répartition optimale de la production
 
-### power_flow.py
-**Rôle** : Calculs de flux de puissance  
-**Contenu** :
-- Méthodes de calcul AC/DC
-- Analyse des pertes
-- Gestion des contraintes réseau
+- **power_flow.py** : Calculs des flux de puissance
+  - `PowerFlowAnalyzer` : Analyse les flux dans le réseau
+  - Permet de faire des calculs AC et DC
 
-**Utilisation** :
-- Calculs de flux de puissance
-- Analyse des contraintes de transport
+### 2. Utils (`/utils`)
 
-### optimization.py
-**Rôle** : Optimisation du dispatch  
-**Contenu** :
-- Algorithmes d'optimisation
-- Contraintes du réseau
-- Fonctions objectifs
+Ce module contient les outils de support et utilitaires.
 
-**Utilisation** :
-- Optimisation de la production
-- Minimisation des pertes
+#### Fichiers principaux :
 
-## 3. Dossier UTILS/
+- **data_loader.py** : Chargement des données
+  - `NetworkDataLoader` : Charge les données depuis les fichiers CSV
+  - Utilisez ce fichier pour modifier la façon dont les données sont chargées
 
-### __init__.py
-**Rôle** : Définir le package utils  
-**Contenu** :
-- Imports des fonctions utilitaires
-- Définition des exports
+- **geo_utils.py** : Utilitaires géographiques
+  - `GeoUtils` : Calculs de distances et optimisation des tracés
+  - Utile pour les analyses géographiques du réseau
 
-### data_loader.py
-**Rôle** : Chargement des données  
-**Contenu** :
-- Lecture des fichiers JSON
-- Chargement des séries temporelles
-- Gestion des erreurs
+- **time_utils.py** : Gestion des séries temporelles
+  - `TimeSeriesManager` : Analyse des données temporelles
+  - Analyse des pics de demande et statistiques saisonnières
 
-**Utilisation** :
-- Chargement des données du réseau
-- Import des séries temporelles
+- **visualization_utils.py** : Outils de visualisation
+  - `NetworkVisualizer` : Création de visualisations du réseau
+  - Génération de graphiques et cartes
 
-### validators.py
-**Rôle** : Validation des données  
-**Contenu** :
-- Schémas de validation
-- Vérification des contraintes électriques
-- Détection des erreurs
+- **lines_filter.py** : Filtrage des lignes
+  - `LineFilter` : Filtrage et géolocalisation des lignes
+  - Utilisé pour la préparation des données de lignes
 
-**Utilisation** :
-- Validation des données d'entrée
-- Vérification de la cohérence
+- **validators.py** : Validation des données
+  - `NetworkValidator` : Vérifie la cohérence des données
+  - Assure la qualité des données du réseau
 
-### geo_utils.py
-**Rôle** : Calculs géographiques  
-**Contenu** :
-- Calcul des distances
-- Optimisation des tracés
-- Contraintes géographiques
+### 3. Tests (`/tests`)
 
-**Utilisation** :
-- Calcul des longueurs de lignes
-- Optimisation des tracés
+Contient les tests unitaires et d'intégration.
 
-### time_utils.py
-**Rôle** : Gestion des données temporelles  
-**Contenu** :
-- Synchronisation des séries temporelles
-- Agrégation des données
-- Gestion des périodes
+- **test_network_builder.py** : Tests de la construction du réseau
+- **test_power_flow.py** : Tests des calculs de flux
 
-**Utilisation** :
-- Traitement des données horaires
-- Préparation des simulations temporelles
+## 📊 Organisation des Données (`/data`)
 
-### visualization_utils.py
-**Rôle** : Visualisation des résultats  
-**Contenu** :
-- Génération de graphiques
-- Visualisation du réseau
-- Export des résultats
+Les données sont organisées comme suit :
 
-**Utilisation** :
-- Présentation des résultats
-- Création de rapports
+```
+data/
+├── regions/
+│   └── buses.csv         # Points de connexion du réseau
+│
+├── topology/
+│   ├── lines/
+│   │   ├── line_types.csv    # Types de lignes standard
+│   │   └── lines.csv         # Lignes de transmission
+│   │
+│   ├── centrales/
+│   │    ├── carriers.csv      # Types de production
+│   │    ├── generators_non_pilotable.csv  # Centrales non pilotables
+│   │    └── generators_pilotable.csv      # Centrales pilotables
+│   │
+│   └── constraints/
+│        └── global_constraints.csv  # Contraintes globales
+│
+└── timeseries/
+    └── 2024/
+        ├── generation/
+        │   ├── generators-p_max_pu.csv       # Production max non pilotable
+        │   └── generators-marginal_cost.csv   # Coûts marginaux pilotables
+        └── loads-p_set.csv                    # Profils de charge
+```
 
-## 4. Dossier TESTS/
+## 🚀 Comment Utiliser le Modèle
 
-### __init__.py
-**Rôle** : Configuration des tests  
-**Contenu** :
-- Configuration du framework de test
-- Fixtures communes
+Le modèle peut être utilisé via deux scripts principaux situés à la racine du projet :
 
-### test_network_builder.py
-**Rôle** : Tests du constructeur de réseau  
-**Contenu** :
-- Tests unitaires NetworkBuilder
-- Vérification de la topologie
+### 1. main_core.py - Fonctionnalités Principales
 
-### test_power_flow.py
-**Rôle** : Tests des calculs de flux  
-**Contenu** :
-- Tests des calculs AC/DC
-- Vérification des résultats
+Ce script permet de tester les fonctionnalités fondamentales du réseau :
 
-### test_data_loader.py
-**Rôle** : Tests du chargement des données  
-**Contenu** :
-- Tests de lecture des fichiers
-- Validation des formats
+```python
+from network import NetworkCoreManager
+
+# Création du gestionnaire
+manager = NetworkCoreManager()
+
+# Test de création du réseau
+success_creation = manager.test_network_creation()
+if not success_creation:
+    print("Échec de la création du réseau")
+    
+# Test des calculs de flux
+success_pf = manager.test_power_flow()
+if not success_pf:
+    print("Échec des calculs de flux")
+    
+# Test de l'optimisation
+success_opt = manager.test_optimization()
+if not success_opt:
+    print("Échec de l'optimisation")
+    
+# Test de l'analyse complète
+success_analysis = manager.test_complete_analysis()
+if not success_analysis:
+    print("Échec de l'analyse complète")
+```
+
+Ce script vous permet de :
+- Créer et configurer le réseau
+- Visualiser les détails des bus, lignes et générateurs
+- Effectuer des calculs de flux de puissance (AC/DC)
+- Optimiser la production
+- Réaliser une analyse complète du réseau
+
+### 2. main_utils.py - Utilitaires et Analyses
+
+Ce script permet de tester les fonctionnalités utilitaires :
+
+```python
+from network import NetworUtilskManager
+
+# Création du gestionnaire
+manager = NetworUtilskManager()
+
+# Chargement et validation des données
+success_load = manager.load_and_validate()
+if success_load:
+    manager.print_network_info()
+
+# Test des visualisations
+success_viz = manager.test_visualizations()
+
+# Test des analyses temporelles
+success_time = manager.test_time_analysis()
+
+# Test des calculs géographiques
+success_geo = manager.test_geo_calculations()
+```
+
+Ce script vous permet de :
+- Charger et valider les données du réseau
+- Créer des visualisations du réseau
+- Analyser les séries temporelles
+- Effectuer des calculs géographiques
+- Gérer les données des lignes de transmission
+
+
+## 📚 Ressources Additionnelles
+
+- Installation : Voir `INSTALL.md` pour les instructions d'installation
+- Dépendances : Voir `requirements.txt` pour la liste des packages requis

@@ -72,7 +72,8 @@ class PowerFlowAnalyzer:
             calc_mode = mode if mode else self.mode
             
             if calc_mode == "ac":
-                success = self.network.pf(snapshots=snapshot)
+                self.network.lpf(snapshots=snapshot)
+                success = self.network.pf(snapshots=snapshot,x_tol=1e-5)
             else:
                 success = self.network.lpf(snapshots=snapshot)
 
@@ -94,7 +95,7 @@ class PowerFlowAnalyzer:
             - Flux de puissance
             - Marge disponible
         """
-        if not self.results_available:
+        if not self.results_available or self.network.lines_t.p0.empty:
             raise RuntimeError("Aucun résultat de calcul disponible")
 
         # Calculer le chargement en utilisant p0 (flux de puissance) et s_nom (capacité)
@@ -155,7 +156,7 @@ class PowerFlowAnalyzer:
         return {
             'total_losses_mw': float(losses.sum()),
             'losses_percent': float(losses.sum() / total_generation * 100),
-            'losses_by_voltage': self.network.lines.groupby('type').apply(
+            'losses_by_voltage': self.network.lines.groupby('type',group_keys=False).apply(
                 lambda x: (
                     self.network.lines_t.p0[x.index].sum() - 
                     self.network.lines_t.p1[x.index].sum()

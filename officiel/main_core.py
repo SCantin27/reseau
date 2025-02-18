@@ -118,13 +118,13 @@ class NetworkCoreManager:
             analyzer = PowerFlowAnalyzer(self.network)
             
             # Test du calcul DC
-            print("\n2. Calcul en mode AC...")
-            success_dc = analyzer.run_power_flow(mode="ac")
+            print("\n2. Calcul en mode DC...")
+            success_dc = analyzer.run_power_flow(mode="dc")
             if success_dc:
-                print("✓ Calcul AC réussi")
+                print("✓ Calcul DC réussi")
                 
                 # Analyse des résultats
-                print("\n3. Analyse des résultats AC:")
+                print("\n3. Analyse des résultats DC:")
                 loading = analyzer.get_line_loading()
                 print("\nChargement des lignes:")
                 print(loading.head())
@@ -182,7 +182,9 @@ class NetworkCoreManager:
                 print("\nProduction par type:")
                 print(results['production_by_type'].sum())
                 
-                print(f"\nNombre de contraintes actives: {results['n_active_line_constraints']}")
+                print("\nContraintes globales:")
+                print(results["global_constraints"])
+
                 print(f"Coût total: {results['total_cost']:.2f}")
                 
                 return True
@@ -205,11 +207,11 @@ class NetworkCoreManager:
             
             # Calcul des flux
             print("\n2. Calcul des flux de puissance...")
-            self.network, pf_results = self.builder.run_power_flow(self.network)
+            self.network, pf_results = self.builder.run_power_flow(self.network,mode="dc")
             
             # Analyse complète
             print("\n3. Analyse des résultats...")
-            results = self.builder.analyze_results(self.network)
+            results = self.builder.analyze_results(self.network,mode="dc")
             
             # Affichage des résultats principaux
             print("\n=== Résultats de l'analyse ===")

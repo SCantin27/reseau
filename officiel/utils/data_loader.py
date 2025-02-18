@@ -30,10 +30,13 @@ Notes:
         │   │   ├── line_types.csv    # Types de lignes standard
         │   │   └── lines.csv         # Lignes de transmission
         │   │
-        │   └── centrales/
-        │       ├── carriers.csv      # Types de production
-        │       ├── generators_non_pilotable.csv     # Caractéristiques des centrales non pilotables
-        │       └── generators_pilotable.csv     # Caractéristiques des centrales pilotables
+        │   ├── centrales/
+        │   │    ├── carriers.csv      # Types de production
+        │   │    ├── generators_non_pilotable.csv     # Caractéristiques des centrales non pilotables
+        │   │    └── generators_pilotable.csv     # Caractéristiques des centrales pilotables
+        │   │
+        │   └── constraints/
+        │        └── global_constraints.csv  # Contraintes globales
         │
         └── timeseries/
             └── 2024/
@@ -148,6 +151,13 @@ class NetworkDataLoader:
             for idx, row in generators_pilotable_df.iterrows():
                 network.add("Generator", name=idx, **row.to_dict())
             
+            # Chargement des contraintes
+            global_constraints_df = pd.read_csv(
+                self.data_dir / "topology" / "constraints" / "global_constraints.csv"
+            ).set_index('name')
+            for idx, row in global_constraints_df.iterrows():
+                network.add("GlobalConstraint", name=idx, **row.to_dict())
+                
             return network
             
         except Exception as e:
@@ -176,7 +186,9 @@ class NetworkDataLoader:
         try:
             # Chargement des séries temporelles pour les charges (loads)
             loads_path = self.data_dir / "timeseries" / year / "loads-p_set.csv"
+            #Les noms des colonnes dans les données et dans les loads doivent être identiques
             loads_df = pd.read_csv(loads_path, index_col=0, parse_dates=True)
+            loads_df.columns = [f"load_{col}" for col in loads_df.columns]
             network.loads_t.p_set = loads_df
 
             

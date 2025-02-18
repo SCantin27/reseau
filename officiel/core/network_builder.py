@@ -159,11 +159,13 @@ class NetworkBuilder:
         if mode == "ac":
             results["voltage_profile"] = analyzer.get_voltage_profile()
         
+        # Stocke l'analyseur pour une utilisation dans analyze_results
+        self.power_flow_analyzer = analyzer
         self.current_network = network
         return network, results
 
     def analyze_results(self, 
-                    network: Optional[pypsa.Network] = None) -> Dict:
+                    network: Optional[pypsa.Network] = None,mode: str = "dc") -> Dict:
         """
         Analyse complète des résultats de simulation.
 
@@ -182,17 +184,20 @@ class NetworkBuilder:
         if network is None:
             raise ValueError("Aucun réseau disponible pour l'analyse")
 
-        analyzer = PowerFlowAnalyzer(network, mode="dc")  # mode par défaut
+        # Réutilise l'analyseur précédent s'il existe et qu'il a bien calculé le power flow
+        if hasattr(self, "power_flow_analyzer") and \
+           self.power_flow_analyzer.network == network and \
+           self.power_flow_analyzer.results_available:
+            analyzer = self.power_flow_analyzer
+        else:
+            raise ValueError("Aucun résultat de calcul disponible")
         
         results = {
-            # Résultats des flux de puissance
             "technical_analysis": {
                 "line_loading": analyzer.get_line_loading(),
                 "critical_lines": analyzer.get_critical_lines(),
                 "losses": analyzer.analyze_network_losses()
             },
-            
-            # Bilans énergétiques
             "energy_balance": {
                 "total_generation": network.generators_t.p.sum().sum(),
                 "total_load": network.loads_t.p.sum().sum(),
@@ -201,7 +206,6 @@ class NetworkBuilder:
                 ).sum().sum()
             }
         }
-        
         return results
     
     # Add new method here
