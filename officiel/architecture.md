@@ -1,4 +1,4 @@
-# Architecture du Modèle de Réseau Électrique Québécois
+# Architecture du Module Réseau
 
 Ce document explique l'architecture et l'organisation du module reseau (network). Il servira de guide pour comprendre la structure du modèle et savoir où trouver les différentes fonctionnalités.
 
