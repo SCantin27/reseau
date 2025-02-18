@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Module de visualisation du réseau électrique.
 
@@ -91,7 +89,7 @@ class NetworkVisualizer:
         if save_path:
             plt.savefig(save_path)
             
-        #Voir comment faire une vraie cartre du réseau
+        #Voir comment faire une vraie carte du réseau
 
     def plot_load_profile(self, 
                          period: Optional[str] = None,
