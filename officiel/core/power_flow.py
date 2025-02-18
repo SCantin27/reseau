@@ -151,7 +151,7 @@ class PowerFlowAnalyzer:
 
         total_generation = self.network.generators_t.p.sum().sum()
         total_load = self.network.loads_t.p.sum().sum()
-        losses = self.network.lines_t.p0.sum() - self.network.lines_t.p1.sum()
+        losses = self.network.lines_t.p0.sum() + self.network.lines_t.p1.sum()
 
         return {
             'total_losses_mw': float(losses.sum()),
