@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 n = pypsa.Network()
 
 # Add buses with carriers
+
+# Slack Node : Artificial node that take the power imbalance - Do not remove
 n.add("Bus", name="SlackBus", v_nom=735)
 
 n.add("Bus", name="GenBus1", v_nom=735)
@@ -41,27 +43,27 @@ n.add("Load", name="Load4", bus="LoadBus4", control="PQ", p_set=2000)
 n.add("Load", name="Load5", bus="LoadBus5", control="PQ", p_set=2500)
 
 # Add Transmission Lines
-n.add("Line", name="Gen1-Gen2", bus0="GenBus1", bus1="GenBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Gen2-Gen3", bus0="GenBus2", bus1="GenBus3", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Gen3-Neutral1", bus0="GenBus3", bus1="NeutralBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Gen4-Neutral1", bus0="GenBus4", bus1="NeutralBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen1-Gen2", bus0="GenBus1", bus1="GenBus2", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen2-Gen3", bus0="GenBus2", bus1="GenBus3", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen3-Neutral1", bus0="GenBus3", bus1="NeutralBus1", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen4-Neutral1", bus0="GenBus4", bus1="NeutralBus1", x=10, r=1, g=0.00049, s_nom=100000)
 
-n.add("Line", name="Neutral1-Neutral2", bus0="NeutralBus1", bus1="NeutralBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Neutral1-Neutral2(2)", bus0="NeutralBus1", bus1="NeutralBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Neutral1-Neutral2(3)", bus0="NeutralBus1", bus1="NeutralBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral1-Neutral2", bus0="NeutralBus1", bus1="NeutralBus2", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral1-Neutral2(2)", bus0="NeutralBus1", bus1="NeutralBus2", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral1-Neutral2(3)", bus0="NeutralBus1", bus1="NeutralBus2", x=10, r=1, g=0.00049, s_nom=100000)
 
-n.add("Line", name="Gen5-Load5", bus0="GenBus5", bus1="LoadBus5", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Gen5-Load5", bus0="GenBus5", bus1="LoadBus5", x=10, r=1, g=0.00049, s_nom=100000)
 
-n.add("Line", name="Neutral2-Load5", bus0="NeutralBus2", bus1="LoadBus5", x=0.1, r=0.01, g=0.00049, s_nom=100000)
-n.add("Line", name="Neutral2-Load4", bus0="NeutralBus2", bus1="LoadBus4", x=0.1, r=0.01, g=0.00049, s_nom=100000)
-n.add("Line", name="Neutral2-Load3", bus0="NeutralBus2", bus1="LoadBus3", x=0.1, r=0.01, g=0.00049, s_nom=100000)
-n.add("Line", name="Neutral2-Load3(2)", bus0="NeutralBus2", bus1="LoadBus3", x=0.1, r=0.01, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load5", bus0="NeutralBus2", bus1="LoadBus5", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load4", bus0="NeutralBus2", bus1="LoadBus4", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load3", bus0="NeutralBus2", bus1="LoadBus3", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Neutral2-Load3(2)", bus0="NeutralBus2", bus1="LoadBus3", x=10, r=1, g=0.00049, s_nom=100000)
 
-n.add("Line", name="Load3-Load2", bus0="LoadBus3", bus1="LoadBus2", x=1, r=0.1, g=0.00049, s_nom=100000)
-n.add("Line", name="Load2-Load1", bus0="LoadBus2", bus1="LoadBus1", x=1, r=0.1, g=0.00049, s_nom=100000)
+n.add("Line", name="Load3-Load2", bus0="LoadBus3", bus1="LoadBus2", x=10, r=1, g=0.00049, s_nom=100000)
+n.add("Line", name="Load2-Load1", bus0="LoadBus2", bus1="LoadBus1", x=10, r=1, g=0.00049, s_nom=100000)
 
-#Slack Node : Do not remove
-n.add("Line", name="Slack-Neutral1", bus0="SlackBus", bus1="NeutralBus1", x=0.000001, r=0.000000001, s_nom=100000)
+
+n.add("Line", name="Slack-Neutral1", bus0="SlackBus", bus1="NeutralBus1", x=1e-6, r=1e-7, s_nom=100000)
 
 # Optimize the network : Run the DC PowerFlow to evaluate optimal generation dispatch
 n.optimize()
@@ -77,48 +79,46 @@ n.generators.loc["Gen5", "p_set"] = p_opt_gen5 = n.generators_t.p["Gen5"].iloc[-
 total_load = n.loads_t.p.sum().sum()
 line_loss_initial_estimation = total_load * 0.1
 
-# Count the number of generators not operating at their maximum output
+# List the number of generators not operating at their maximum output
 generators_not_at_max = [gen for gen in n.generators.index if n.generators.loc[gen, "p_set"] < n.generators.loc[gen, "p_nom"]]
 
+# Sort generators by marginal cost
+sorted_generators = n.generators.loc[generators_not_at_max].sort_values(by="marginal_cost").index
+
 # Dispatch the line loss estimation to each generator not operating at its maximum output
-if generators_not_at_max:
-    #Adding an overshoot of 10% to account for additionnal losses
-    additional_power_per_gen = 1.1*line_loss_initial_estimation / len(generators_not_at_max)
-    for gen in generators_not_at_max:
-        new_p_set = n.generators.loc[gen, "p_set"] + additional_power_per_gen
-        # Make sure the generator does not exceed its maximum output
-        if new_p_set > n.generators.loc[gen, "p_nom"]:
-            n.generators.loc[gen, "p_set"] = n.generators.loc[gen, "p_nom"]
-        else:
-            n.generators.loc[gen, "p_set"] = new_p_set
+remaining_loss = line_loss_initial_estimation
+for gen in sorted_generators:
+    if remaining_loss <= 0:
+        break
+    available_capacity = n.generators.loc[gen, "p_nom"] - n.generators.loc[gen, "p_set"]
+    if available_capacity >= remaining_loss:
+        n.generators.loc[gen, "p_set"] += remaining_loss
+        remaining_loss = 0
+    else:
+        n.generators.loc[gen, "p_set"] += available_capacity
+        remaining_loss -= available_capacity
 
 # Run the AC PowerFlow
 n.pf()
 
-# Check the losses
-total_load = n.loads_t.p.sum().sum()
-total_generation = n.generators_t.p.sum().sum()
-losses = total_generation - total_load
-
-# While the power generated by the Slack generator is greater than 1% of the total load, distribute the slack generator's power to generators not at their maximum output
-iterations = 0
+# Check the power generated by the Slack generator
 slack_power = n.generators_t.p["SlackGen"].iloc[-1]
-while slack_power > total_load/100:
+
+# While the power generated by the Slack generator is greater than 0.1% of the total load, distribute the slack generator's power to generators not at their maximum output
+iterations = 0
+while slack_power > total_load / 1000:
     # Distribute the Slack generator's power to generators not at their maximum output
-    if generators_not_at_max:
-        additional_power_per_gen = 1.1*losses / len(generators_not_at_max)
-        for gen in generators_not_at_max:
-            new_p_set = n.generators.loc[gen, "p_set"] + additional_power_per_gen
-            # Make sure the generator does not exceed its maximum output
-            if new_p_set > n.generators.loc[gen, "p_nom"]:
-                n.generators.loc[gen, "p_set"] = n.generators.loc[gen, "p_nom"]
-            else:
-                n.generators.loc[gen, "p_set"] = new_p_set
-
-    iterations += 1
-
-    total_generation = n.generators_t.p.sum().sum()
-    losses = total_generation - total_load
+    remaining_slack_power = slack_power
+    for gen in sorted_generators:
+        if remaining_slack_power <= 0:
+            break
+        available_capacity = n.generators.loc[gen, "p_nom"] - n.generators.loc[gen, "p_set"]
+        if available_capacity >= remaining_slack_power:
+            n.generators.loc[gen, "p_set"] += remaining_slack_power
+            remaining_slack_power = 0
+        else:
+            n.generators.loc[gen, "p_set"] += available_capacity
+            remaining_slack_power -= available_capacity
 
     # Run the AC PowerFlow again with updated values of p_set
     n.pf()
@@ -126,10 +126,14 @@ while slack_power > total_load/100:
     # Check the power generated by the Slack generator
     slack_power = n.generators_t.p["SlackGen"].iloc[-1]
 
-print("Number of iterations: ", iterations)
+    iterations += 1
+
 
 print("------------------------------------------------------------------------------------------")
+
 # Display results
+
+print("Number of iterations: ", iterations)
 
 print("\nPower generated by each generator (p):")
 print(n.generators_t.p)
@@ -139,3 +143,19 @@ print(n.loads_t.p)
 
 print("\nPower losses on each lines :")
 print(abs(n.lines_t.p0 + n.lines_t.p1))
+
+print("------------------------------------------------------------------------------------------")
+#Powerflow on each line
+print("\nPowerflow on each line :")
+print(n.lines_t.p0)
+
+print("------------------------------------------------------------------------------------------")
+
+print("\nTotal Gen :")
+print(round(n.generators_t.p.sum().sum(),0))
+
+print("\nTotal Load :")
+print(n.loads_t.p.sum().sum())
+
+print("\nTotal Losses :")
+print(round(n.generators_t.p.sum().sum() - n.loads_t.p.sum().sum(),0))
