@@ -156,6 +156,32 @@ class NetworkCoreManager:
             print(f"Erreur lors des calculs de flux: {e}", file=sys.stderr)
             return False
     
+    def test_redistribute_slack_power(self) -> bool:
+        """Teste la redistribution de la puissance du générateur Slack."""
+        try:
+            print("\n=== Test de redistribution de la puissance du générateur Slack ===")
+            analyzer = PowerFlowAnalyzer(self.network)
+            total_load = self.network.loads_t.p.sum().sum()
+            sorted_generators = analyzer.get_sorted_generators()
+            analyzer.redistribute_slack_power(total_load, sorted_generators)
+            print("✓ Redistribution de la puissance du générateur Slack réussie")
+            return True
+        except Exception as e:
+            print(f"Erreur lors de la redistribution de la puissance du générateur Slack: {e}", file=sys.stderr)
+            return False
+        
+    def test_get_sorted_generators(self) -> bool:
+        """Teste l'obtention de la liste des générateurs triés par coût marginal."""
+        try:
+            print("\n=== Test de l'obtention des générateurs triés par coût marginal ===")
+            analyzer = PowerFlowAnalyzer(self.network)
+            sorted_generators = analyzer.get_sorted_generators()
+            print(f"✓ Générateurs triés par coût marginal: {sorted_generators}")
+            return True
+        except Exception as e:
+            print(f"Erreur lors de l'obtention des générateurs triés par coût marginal: {e}", file=sys.stderr)
+            return False        
+    
     def test_optimization(self) -> bool:
         """Teste l'optimisation du réseau."""
         try:
@@ -249,18 +275,30 @@ def main():
     if not success_pf:
         print("Échec des calculs de flux")
         return 2
+
+    # Test de la redistribution de la puissance du générateur Slack
+    success_redistribute = manager.test_redistribute_slack_power()
+    if not success_redistribute:
+        print("Échec de la redistribution de la puissance du générateur Slack")
+        return 3        
         
+    # Test de l'obtention des générateurs triés par coût marginal
+    success_sorted_gens = manager.test_get_sorted_generators()
+    if not success_sorted_gens:
+        print("Échec de l'obtention des générateurs triés par coût marginal")
+        return 4
+
     # Test de l'optimisation
     success_opt = manager.test_optimization()
     if not success_opt:
         print("Échec de l'optimisation")
-        return 3
+        return 5
         
     # Test de l'analyse complète
     success_analysis = manager.test_complete_analysis()
     if not success_analysis:
         print("Échec de l'analyse complète")
-        return 4
+        return 6
     
     print("\n✓ Tous les tests core réussis!")
     return 0
