@@ -18,6 +18,7 @@ Notes:
     - line_types.csv pour les paramètres standards
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
+                Simon Cantin (simon-2.cantin@polymtl.ca)
                 Add Contributor here
 """
 
@@ -74,8 +75,15 @@ class PowerFlowAnalyzer:
             if calc_mode == "ac":
                 self.network.lpf(snapshots=snapshot)
                 success = self.network.pf(snapshots=snapshot,x_tol=1e-5)
+
+                if success:
+                    # Redistribue la puissance du générateur Slack après le premier calcul de flux de puissance AC
+                    total_load = self.network.loads_t.p.sum().sum()
+                    sorted_generators = self.get_sorted_generators()
+                    self.redistribute_slack_power(total_load, sorted_generators)
             else:
                 success = self.network.lpf(snapshots=snapshot)
+                
 
             self.results_available = True if success is None else success
             return self.results_available
@@ -85,6 +93,49 @@ class PowerFlowAnalyzer:
             self.results_available = False
             return False
 
+    def redistribute_slack_power(self, total_load: float, sorted_generators: pd.Index) -> None:
+        """
+        Redistribue la puissance du générateur Slack aux générateurs ne fonctionnant pas à leur capacité maximale.
+
+        Args:
+            total_load: Charge totale du réseau
+            sorted_generators: Liste des générateurs triés par coût marginal
+        """
+        try:
+            slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+            iterations = 0
+
+            while slack_power > total_load / 1000:
+                remaining_slack_power = slack_power
+                for gen in sorted_generators:
+                    if remaining_slack_power <= 0:
+                        break
+                    available_capacity = self.network.generators.loc[gen, "p_nom"] - self.network.generators.loc[gen, "p_set"]
+                    if available_capacity >= remaining_slack_power:
+                        self.network.generators.loc[gen, "p_set"] += remaining_slack_power
+                        remaining_slack_power = 0
+                    else:
+                        self.network.generators.loc[gen, "p_set"] += available_capacity
+                        remaining_slack_power -= available_capacity
+
+                self.network.pf()
+                slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+                iterations += 1
+
+        except Exception as e:
+            print(f"Erreur lors de la redistribution de la puissance du générateur Slack : {str(e)}")
+
+    def get_sorted_generators(self) -> pd.Index:
+        """
+        Trie les générateurs ne fonctionnant pas à leur capacité maximale par coût marginal.
+
+        Returns:
+            pd.Index: Liste triée des générateurs
+        """
+        generators_not_at_max = [gen for gen in self.network.generators.index if self.network.generators.loc[gen, "p_set"] < self.network.generators.loc[gen, "p_nom"]]
+        sorted_generators = self.network.generators.loc[generators_not_at_max].sort_values(by="marginal_cost").index
+        return sorted_generators
+    
     def get_line_loading(self) -> pd.DataFrame:
         """
         Calcule le chargement des lignes.

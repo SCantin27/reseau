@@ -28,7 +28,7 @@ import pypsa
 import pandas as pd
 from typing import Dict, Optional, Tuple
 from datetime import datetime
-
+from core.power_flow import PowerFlowAnalyzer
 
 class NetworkOptimizer:
     """
@@ -55,16 +55,7 @@ class NetworkOptimizer:
         self.network = network
         self.solver_name = solver_name
 
-    def get_sorted_generators(self) -> pd.Index:
-        """
-        Trie les générateurs ne fonctionnant pas à leur capacité maximale par coût marginal.
 
-        Returns:
-            pd.Index: Liste triée des générateurs
-        """
-        generators_not_at_max = [gen for gen in self.network.generators.index if self.network.generators.loc[gen, "p_set"] < self.network.generators.loc[gen, "p_nom"]]
-        sorted_generators = self.network.generators.loc[generators_not_at_max].sort_values(by="marginal_cost").index
-        return sorted_generators
 
     def optimize(self) -> pypsa.Network:
         """
@@ -102,7 +93,8 @@ class NetworkOptimizer:
             line_loss_initial_estimation = total_load * 0.1
 
             # Obtient une liste des générateurs triés par coût marginal
-            sorted_generators = self.get_sorted_generators()
+            analyzer = PowerFlowAnalyzer(self.network)
+            sorted_generators = analyzer.get_sorted_generators()
 
             # Répartit l'estimation des pertes de ligne à chaque générateur ne fonctionnant pas à sa capacité maximale, en priorisant les coûts marginaux les plus bas
             remaining_loss = line_loss_initial_estimation
