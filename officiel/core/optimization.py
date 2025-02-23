@@ -20,7 +20,7 @@ Notes:
     - Les contraintes de réseau définies dans lines.csv
 
 Contributeurs : Yanis Aksas (yanis.aksas@polymtl.ca)
-                Add Contributor here
+                Simon Cantin (simon-2.cantin@polymtl.ca)
 """
 
 import pypsa
@@ -81,6 +81,33 @@ class NetworkOptimizer:
             if status != "ok":
                 raise RuntimeError(f"Optimisation échouée avec statut: {status}")
             
+            # Définit la puissance de chaque générateur à sa valeur optimale pour le flux de puissance AC à partir du résultat de l'optimisation
+            for gen in self.network.generators.index:
+                self.network.generators.loc[gen, "p_set"] = self.network.generators_t.p[gen].iloc[-1]
+
+            # Effectue une estimation initiale des pertes de ligne (10% de la charge totale)
+            total_load = self.network.loads_t.p.sum().sum()
+            line_loss_initial_estimation = total_load * 0.1
+
+            # Liste les générateurs ne fonctionnant pas à leur capacité maximale
+            generators_not_at_max = [gen for gen in self.network.generators.index if self.network.generators.loc[gen, "p_set"] < self.network.generators.loc[gen, "p_nom"]]
+
+            # Trie les générateurs de generators_not_at_max par coût marginal
+            sorted_generators = self.network.generators.loc[generators_not_at_max].sort_values(by="marginal_cost").index
+
+            # Répartit l'estimation des pertes de ligne à chaque générateur ne fonctionnant pas à sa capacité maximale, en priorisant les coûts marginaux les plus bas
+            remaining_loss = line_loss_initial_estimation
+            for gen in sorted_generators:
+                if remaining_loss <= 0:
+                    break
+                available_capacity = self.network.generators.loc[gen, "p_nom"] - self.network.generators.loc[gen, "p_set"]
+                if available_capacity >= remaining_loss:
+                    self.network.generators.loc[gen, "p_set"] += remaining_loss
+                    remaining_loss = 0
+                else:
+                    self.network.generators.loc[gen, "p_set"] += available_capacity
+                    remaining_loss -= available_capacity
+ 
             return self.network
             
         except Exception as e:
@@ -142,9 +169,9 @@ class NetworkOptimizer:
             Tuple[faisable, message]: Statut de faisabilité et message explicatif
         """
         try:
-            # Vérifie la capacité totale
+            # Vérifie la capacité totale et la charge + les pertes (estimé à 10% de la charge)
             total_capacity = self.network.generators.p_nom.sum()
-            max_load = self.network.loads_t.p_set.sum(axis=1).max()
+            max_load = 1.1*self.network.loads_t.p_set.sum(axis=1).max()
             
             if total_capacity < max_load:
                 return False, f"Capacité insuffisante: {total_capacity:.0f} MW < {max_load:.0f} MW"
