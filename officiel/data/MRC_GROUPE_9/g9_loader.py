@@ -25,7 +25,7 @@ shapefile_path = "officiel/data/MRC_GROUPE_9/base_mrc_database.shp"
 gdf_mrc = gpd.read_file(shapefile_path)
 
 # Charger le fichier CSV contenant les points
-csv_file_path = "officiel/data/topology/geolocated_nodes.csv"
+csv_file_path = "officiel/data/topology/filled_geolocated_nodes.csv"
 df_points = pd.read_csv(csv_file_path)
 
 # Charger le fichier CSV contenant les noms des MRC

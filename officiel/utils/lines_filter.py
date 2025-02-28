@@ -223,7 +223,56 @@ class LineFilter:
         except Exception as e:
             print(f"Une erreur est survenue : {str(e)}")
 
+    def fill_missing_coordinates(self, input_geolocated_file, output_filled_file):
+            """
+            Remplit les coordonnées manquantes en utilisant la moyenne des coordonnées
+            du point précédent et du point suivant dans la liste.
+            
+            Args:
+                input_geolocated_file (str): Chemin du fichier CSV contenant les nœuds géolocalisés
+                output_filled_file (str): Chemin du fichier CSV de sortie avec les coordonnées remplies
+            """
+            try:
+                df = pd.read_csv(input_geolocated_file)
+                
+                # Parcourir chaque ligne pour trouver les coordonnées manquantes
+                for index, row in df.iterrows():
+                    if pd.isna(row['latitude']) or pd.isna(row['longitude']):
+                        prev_index = None
+                        for i in range(index - 1, -1, -1):
+                            if not pd.isna(df.at[i, 'latitude']) and not pd.isna(df.at[i, 'longitude']):
+                                prev_index = i
+                                break
+                        # Trouver le point suivant avec des coordonnées valides
+                        next_index = None
+                        for i in range(index + 1, len(df)):
+                            if not pd.isna(df.at[i, 'latitude']) and not pd.isna(df.at[i, 'longitude']):
+                                next_index = i
+                                break
+                        if prev_index is not None and next_index is not None:
+                            prev_lat = df.at[prev_index, 'latitude']
+                            prev_lon = df.at[prev_index, 'longitude']
+                            next_lat = df.at[next_index, 'latitude']
+                            next_lon = df.at[next_index, 'longitude']
+                            
+                            if not pd.isna(prev_lat) and not pd.isna(next_lat):
+                                df.at[index, 'latitude'] = (prev_lat + next_lat) / 2
+                            if not pd.isna(prev_lon) and not pd.isna(next_lon):
+                                df.at[index, 'longitude'] = (prev_lon + next_lon) / 2
+                
+                os.makedirs(os.path.dirname(output_filled_file), exist_ok=True)
+                
+                # Sauvegarder le résultat
+                df.to_csv(output_filled_file, index=False, encoding='utf-8')
+                print(f"Résultats avec coordonnées remplies sauvegardés dans : {output_filled_file}")
+                
+            except Exception as e:
+                print(f"Une erreur est survenue lors du remplissage des coordonnées : {str(e)}")
+
+
     # Add new method here
+
+    
 
 
 if __name__ == "__main__":
@@ -234,6 +283,7 @@ if __name__ == "__main__":
     output_quebec_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
     output_nodes_file = os.path.join(project_root, "data", "topology", "unique_nodes.csv")
     output_geolocated_file = os.path.join(project_root, "data", "topology", "geolocated_nodes.csv")
+    output_filled_file = os.path.join(project_root, "data", "topology", "filled_geolocated_nodes.csv")
     
     line_filter = LineFilter()
     
@@ -243,4 +293,7 @@ if __name__ == "__main__":
     # # Exporter les nœuds uniques
     # line_filter.get_unique_nodes(output_quebec_file, output_nodes_file)
 
-    line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
+    # line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
+
+     # Remplir les coordonnées manquantes
+    line_filter.fill_missing_coordinates(output_geolocated_file, output_filled_file)
