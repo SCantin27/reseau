@@ -187,6 +187,30 @@ class NetworkCoreManager:
 
                 print(f"Coût total: {results['total_cost']:.2f}")
                 
+                # # Export des données de production des réservoirs
+                # print("\n5. Export des données de production vers CSV...")
+                
+                # # Extraire les centrales hydro_reservoir
+                # hydro_reservoir_gens = self.network.generators[
+                #     self.network.generators.carrier == 'hydro_reservoir'
+                # ].index
+                
+                # # Extraire les données de production pour ces centrales
+                # if len(hydro_reservoir_gens) > 0:
+                #     # Données de production par centrale hydro_reservoir
+                #     hydro_production = self.network.generators_t.p[hydro_reservoir_gens]
+                    
+                #     # Ajout de la production totale par type
+                #     production_by_type = results['production_by_type']
+                    
+                #     # Export vers CSV
+                #     hydro_production.to_csv('hydro_reservoir_production.csv')
+                #     production_by_type.to_csv('production_by_type.csv')
+                    
+                #     print(f"✓ Données exportées vers 'hydro_reservoir_production.csv' et 'production_by_type.csv'")
+                # else:
+                #     print("Aucune centrale hydro_reservoir trouvée dans le réseau")
+                
                 return True
             else:
                 print("Optimisation non faisable")
