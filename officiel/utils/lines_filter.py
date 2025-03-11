@@ -270,10 +270,47 @@ class LineFilter:
                 print(f"Une erreur est survenue lors du remplissage des coordonnées : {str(e)}")
 
 
-    # Add new method here
 
-    
+    def add_coordinates_to_lines(self, lines_file, geolocated_nodes_file):
+        """
+        Ajoute les coordonnées géographiques aux villes dans le fichier des lignes de transmission.
+        
+        Args:
+            lines_file (str): Chemin du fichier CSV contenant les lignes de transmission
+            geolocated_nodes_file (str): Chemin du fichier CSV contenant les nœuds géolocalisés
+        """
+        try:
+            # Lire les fichiers CSV
+            lines_df = pd.read_csv(lines_file)
+            geolocated_nodes_df = pd.read_csv(geolocated_nodes_file)
+            
+            # Créer un dictionnaire pour les coordonnées géographiques
+            coordinates_dict = geolocated_nodes_df.set_index('node_name')[['latitude', 'longitude']].to_dict('index')
+            
+            # Ajouter ou mettre à jour les colonnes pour les coordonnées géographiques
+            lines_df['latitude_starting'] = lines_df['network_node_name_starting'].map(lambda x: coordinates_dict.get(x, {}).get('latitude'))
+            lines_df['longitude_starting'] = lines_df['network_node_name_starting'].map(lambda x: coordinates_dict.get(x, {}).get('longitude'))
+            lines_df['latitude_ending'] = lines_df['network_node_name_ending'].map(lambda x: coordinates_dict.get(x, {}).get('latitude'))
+            lines_df['longitude_ending'] = lines_df['network_node_name_ending'].map(lambda x: coordinates_dict.get(x, {}).get('longitude'))
+            
+            # Réorganiser les colonnes pour insérer les coordonnées juste après les noms des villes
+            cols = list(lines_df.columns)
+            starting_index = cols.index('network_node_name_starting')
+            ending_index = cols.index('network_node_name_ending') 
+            cols.insert(starting_index + 1, cols.pop(cols.index('latitude_starting')))
+            cols.insert(starting_index + 2, cols.pop(cols.index('longitude_starting')))
+            cols.insert(ending_index + 1, cols.pop(cols.index('latitude_ending')))
+            cols.insert(ending_index + 2, cols.pop(cols.index('longitude_ending')))
+            lines_df = lines_df[cols]
+            
+            # Sauvegarder le résultat en écrasant le fichier d'entrée
+            lines_df.to_csv(lines_file, index=False, encoding='utf-8')
+            print(f"Résultats avec coordonnées ajoutées sauvegardés dans : {lines_file}")
+            
+        except Exception as e:
+            print(f"Une erreur est survenue lors de l'ajout des coordonnées : {str(e)}")
 
+# ...existing code...
 
 if __name__ == "__main__":
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -295,5 +332,8 @@ if __name__ == "__main__":
 
     # line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
 
-     # Remplir les coordonnées manquantes
+    # Remplir les coordonnées manquantes
     line_filter.fill_missing_coordinates(output_geolocated_file, output_filled_file)
+
+    # Ajouter les coordonnées géographiques aux lignes de transmission
+    line_filter.add_coordinates_to_lines(output_quebec_file, output_filled_file)
