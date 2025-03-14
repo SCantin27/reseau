@@ -25,6 +25,7 @@ import pandas as pd
 import requests
 import time
 import os
+import random
 
 class LineFilter:
     def __init__(self):
@@ -352,9 +353,95 @@ class LineFilter:
         except Exception as e:
             print(f"Une erreur est survenue lors de l'extraction des lignes : {str(e)}")
 
+
+    def clean_lines(self, input_file, output_file):
+        """
+        Nettoie le fichier lignes_quebec.csv en supprimant les lignes en double
+        et sauvegarde le fichier nettoyé.
+        
+        Args:
+            input_file (str): Chemin du fichier CSV d'entrée (lignes_quebec.csv)
+            output_file (str): Chemin du fichier CSV de sortie (lignes_quebec_clean.csv)
+        """
+        try:
+            df = pd.read_csv(input_file)
+            
+            # Supprimer les doublons
+            df_cleaned = df.drop_duplicates(subset=['network_node_name_starting', 'network_node_name_ending', 'voltage'])
+            
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            
+            # Sauvegarder le fichier nettoyé
+            df_cleaned.to_csv(output_file, index=False, encoding='utf-8')
+            
+            print(f"Nombre de lignes après nettoyage : {len(df_cleaned)}")
+            print(f"Fichier nettoyé sauvegardé : {output_file}")
+            
+        except Exception as e:
+            print(f"Une erreur est survenue lors du nettoyage des lignes : {str(e)}")
+
+
+    def extract_buses(self, input_file, output_file):
+        """
+        Extrait les informations des bus du fichier lignes_quebec.csv
+        et les sauvegarde dans le fichier buses.csv avec les colonnes spécifiées.
+        
+        Args:
+            input_file (str): Chemin du fichier CSV d'entrée (lignes_quebec.csv)
+            output_file (str): Chemin du fichier CSV de sortie (buses.csv)
+        """
+        try:
+            df = pd.read_csv(input_file)
+            
+            # Initialiser une liste pour stocker les nouveaux bus
+            buses = []
+            
+            # Extraire les bus de départ et d'arrivée
+            for index, row in df.iterrows():
+                buses.append([row['network_node_name_starting'], row['voltage'], row['latitude_starting'], row['longitude_starting']])
+                buses.append([row['network_node_name_ending'], row['voltage'], row['latitude_ending'], row['longitude_ending']])
+            
+            # Créer un DataFrame avec les bus
+            buses_df = pd.DataFrame(buses, columns=['name', 'voltage', 'latitude', 'longitude'])
+            
+            # Supprimer les doublons
+            buses_df = buses_df.drop_duplicates(subset=['name', 'voltage'])
+            
+            # Ajouter les colonnes 'type' et 'PQ_PV'
+            buses_df['type'] = None
+            buses_df['PQ_PV'] = None
+            
+            # Définir les types et PQ_PV
+            for index, row in buses_df.iterrows():
+                rand_val = random.random()
+                if rand_val < 0.5:
+                    buses_df.at[index, 'type'] = 'conso'
+                    buses_df.at[index, 'PQ_PV'] = 'PQ'
+                elif rand_val < 0.7:
+                    buses_df.at[index, 'type'] = 'prod'
+                    buses_df.at[index, 'PQ_PV'] = 'PV'
+                else:
+                    buses_df.at[index, 'type'] = 'ligne'
+                    buses_df.at[index, 'PQ_PV'] = 'PQ'
+            
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            
+            # Sauvegarder en CSV
+            buses_df.to_csv(output_file, index=False, encoding='utf-8')
+            
+            print(f"Nombre de bus extraits : {len(buses_df)}")
+            print(f"Fichier sauvegardé : {output_file}")
+            
+        except Exception as e:
+            print(f"Une erreur est survenue lors de l'extraction des bus : {str(e)}")
+
 # ajouter module 
 
-    # Chemins des fichiers
+
+    
+
+
+# Chemins des fichiers
 
 
 if __name__ == "__main__":
@@ -368,22 +455,34 @@ if __name__ == "__main__":
     output_filled_file = os.path.join(project_root, "data", "topology", "filled_geolocated_nodes.csv")
     input_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
     output_lines_file = os.path.join(project_root, "data", "topology", "lines", "lines.csv")
-    
+    input_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
+    output_cleaned_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
+    input_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
+    output_buses_file = os.path.join(project_root, "data", "regions", "buses.csv") 
+
+
     line_filter = LineFilter()
     
+
     # # Exécuter le filtrage des lignes du Québec
-    # line_filter.filter_quebec_lines(input_file, output_quebec_file)
+    #line_filter.filter_quebec_lines(input_file, output_quebec_file)
     
     # # Exporter les nœuds uniques
-    # line_filter.get_unique_nodes(output_quebec_file, output_nodes_file)
+    #line_filter.get_unique_nodes(output_quebec_file, output_nodes_file)
 
-    # line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
-
-    # Extraire les lignes et sauvegarder dans lines.csv
-    line_filter.extract_lines(input_file, output_lines_file)
-
+    #line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
+    
     # Remplir les coordonnées manquantes
     #line_filter.fill_missing_coordinates(output_geolocated_file, output_filled_file)
 
     # Ajouter les coordonnées géographiques aux lignes de transmission
-   #line_filter.add_coordinates_to_lines(output_quebec_file, output_filled_file)
+    #line_filter.add_coordinates_to_lines(output_quebec_file, output_filled_file)
+
+    # Extraire les lignes et sauvegarder dans lines.csv
+    #line_filter.extract_lines(input_file, output_lines_file)
+
+    # Nettoyer les lignes et sauvegarder dans lignes_quebec_clean.csv
+    #line_filter.clean_lines(input_file, output_cleaned_file)
+
+    # Extraire les bus et sauvegarder dans buses.csv
+    line_filter.extract_buses(input_file, output_buses_file)
