@@ -310,7 +310,52 @@ class LineFilter:
         except Exception as e:
             print(f"Une erreur est survenue lors de l'ajout des coordonnées : {str(e)}")
 
-# ...existing code...
+
+
+    def extract_lines(self, input_file, output_file):
+        """
+        Extrait les informations des lignes de transmission du fichier lignes_quebec.csv
+        et les sauvegarde dans le fichier lines.csv avec les colonnes spécifiées.
+        
+        Args:
+            input_file (str): Chemin du fichier CSV d'entrée (lignes_quebec.csv)
+            output_file (str): Chemin du fichier CSV de sortie (lines.csv)
+        """
+        try:
+            df = pd.read_csv(input_file)
+            
+            # Initialiser une liste pour stocker les nouvelles lignes
+            new_lines = []
+            
+            for index, row in df.iterrows():
+                name = f"L{index + 1:04d}"
+                bus0 = row['network_node_name_starting']
+                bus1 = row['network_node_name_ending']
+                type_line = f"{row['voltage']}kV_line"
+                length = row['line_segment_length_km']
+                capital_cost = length * 1000  # Estimation du coût
+                s_nom = 10000 + (index % 2) * 10000  # Alternance entre 10000 et 20000
+                
+                new_lines.append([name, bus0, bus1, type_line, length, capital_cost, s_nom])
+            
+            # Créer un DataFrame avec les nouvelles lignes
+            new_lines_df = pd.DataFrame(new_lines, columns=['name', 'bus0', 'bus1', 'type', 'length', 'capital_cost', 's_nom'])
+            
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            
+            # Sauvegarder en CSV
+            new_lines_df.to_csv(output_file, index=False, encoding='utf-8')
+            
+            print(f"Nombre de lignes extraites : {len(new_lines_df)}")
+            print(f"Fichier sauvegardé : {output_file}")
+            
+        except Exception as e:
+            print(f"Une erreur est survenue lors de l'extraction des lignes : {str(e)}")
+
+# ajouter module 
+
+    # Chemins des fichiers
+
 
 if __name__ == "__main__":
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -321,6 +366,8 @@ if __name__ == "__main__":
     output_nodes_file = os.path.join(project_root, "data", "topology", "unique_nodes.csv")
     output_geolocated_file = os.path.join(project_root, "data", "topology", "geolocated_nodes.csv")
     output_filled_file = os.path.join(project_root, "data", "topology", "filled_geolocated_nodes.csv")
+    input_file = os.path.join(project_root, "data", "topology", "lignes_quebec.csv")
+    output_lines_file = os.path.join(project_root, "data", "topology", "lines", "lines.csv")
     
     line_filter = LineFilter()
     
@@ -332,8 +379,11 @@ if __name__ == "__main__":
 
     # line_filter.geolocate_nodes(output_nodes_file, output_geolocated_file )
 
+    # Extraire les lignes et sauvegarder dans lines.csv
+    line_filter.extract_lines(input_file, output_lines_file)
+
     # Remplir les coordonnées manquantes
-    line_filter.fill_missing_coordinates(output_geolocated_file, output_filled_file)
+    #line_filter.fill_missing_coordinates(output_geolocated_file, output_filled_file)
 
     # Ajouter les coordonnées géographiques aux lignes de transmission
-    line_filter.add_coordinates_to_lines(output_quebec_file, output_filled_file)
+   #line_filter.add_coordinates_to_lines(output_quebec_file, output_filled_file)
