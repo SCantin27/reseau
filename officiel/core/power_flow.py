@@ -78,9 +78,11 @@ class PowerFlowAnalyzer:
 
                 if success:
                     # Redistribue la puissance du générateur Slack après le premier calcul de flux de puissance AC
-                    total_load = self.network.loads_t.p.sum().sum()
+                    total_load_p = self.network.loads_t.p.sum().sum()   # Puissance active totale du réseau
+                    total_load_q = self.network.loads_t.q.sum().sum()   # Puissance réactive totale du réseau
                     sorted_generators = self.get_sorted_generators()
-                    self.redistribute_slack_power(total_load, sorted_generators)
+                    self.redistribute_slack_power(total_load_p, sorted_generators, "active")
+                    self.redistribute_slack_power(total_load_q, sorted_generators, "reactive")
             else:
                 success = self.network.lpf(snapshots=snapshot)
                 
@@ -93,16 +95,28 @@ class PowerFlowAnalyzer:
             self.results_available = False
             return False
 
-    def redistribute_slack_power(self, total_load: float, sorted_generators: pd.Index) -> None:
+    def redistribute_slack_power(self, total_load: float, sorted_generators: pd.Index, power_type: str) -> None:
         """
-        Redistribue la puissance du générateur Slack aux générateurs ne fonctionnant pas à leur capacité maximale.
+        Redistribue la puissance active ou réactive du générateur Slack aux générateurs
+        ne fonctionnant pas à leur capacité maximale.
 
         Args:
-            total_load: Charge totale du réseau
+            total_load: Charge totale du réseau (en MW ou MVAr selon le type de puissance)
             sorted_generators: Liste des générateurs triés par coût marginal
+            power_type: "active" pour la puissance active (P) ou "reactive" pour la puissance réactive (Q)
         """
         try:
-            slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+            if power_type == "active":
+                slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+                power_attr = "p_set"
+                capacity_attr = "p_nom"
+            elif power_type == "reactive":
+                slack_power = self.network.generators_t.q["SlackGen"].iloc[-1]
+                power_attr = "q_set"
+                capacity_attr = "q_nom"
+            else:
+                raise ValueError("power_type doit être 'active' ou 'reactive'")
+
             iterations = 0
 
             while slack_power > total_load / 1000:
@@ -110,20 +124,21 @@ class PowerFlowAnalyzer:
                 for gen in sorted_generators:
                     if remaining_slack_power <= 0:
                         break
-                    available_capacity = self.network.generators.loc[gen, "p_nom"] - self.network.generators.loc[gen, "p_set"]
+                    available_capacity = self.network.generators.loc[gen, capacity_attr] - self.network.generators.loc[gen, power_attr]
                     if available_capacity >= remaining_slack_power:
-                        self.network.generators.loc[gen, "p_set"] += remaining_slack_power
+                        self.network.generators.loc[gen, power_attr] += remaining_slack_power
                         remaining_slack_power = 0
                     else:
-                        self.network.generators.loc[gen, "p_set"] += available_capacity
+                        self.network.generators.loc[gen, power_attr] += available_capacity
                         remaining_slack_power -= available_capacity
 
                 self.network.pf()
-                slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+                slack_power = self.network.generators_t.p["SlackGen"].iloc[-1] if power_type == "active" else self.network.generators_t.q["SlackGen"].iloc[-1]
                 iterations += 1
 
         except Exception as e:
-            print(f"Erreur lors de la redistribution de la puissance du générateur Slack : {str(e)}")
+            print(f"Erreur lors de la redistribution de la puissance {power_type} du générateur Slack : {str(e)}")
+
 
     def get_sorted_generators(self) -> pd.Index:
         """
@@ -201,7 +216,7 @@ class PowerFlowAnalyzer:
             raise RuntimeError("Aucun résultat de calcul disponible")
 
         total_generation = self.network.generators_t.p.sum().sum()
-        total_load = self.network.loads_t.p.sum().sum()
+        total_load_p = self.network.loads_t.p.sum().sum()
         losses = self.network.lines_t.p0.sum() + self.network.lines_t.p1.sum()
 
         return {
