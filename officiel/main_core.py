@@ -90,8 +90,10 @@ class NetworkCoreManager:
             print(f"Nombre de pas de temps: {len(self.network.snapshots)}")
             
             if hasattr(self.network, 'loads_t'):
-                print("\nProfils de charge (premiers points):")
+                print("\nProfils de charge - puissance active (premiers points):")
                 print(self.network.loads_t.p_set.head())
+                print("\nProfils de charge - puissance réactive (premiers points):")
+                print(self.network.loads_t.q_set.head())
                 
             if hasattr(self.network, 'generators_t'):
                 print("\nProfils de production (premiers points):")
@@ -157,18 +159,27 @@ class NetworkCoreManager:
             return False
     
     def test_redistribute_slack_power(self) -> bool:
-        """Teste la redistribution de la puissance du générateur Slack."""
+        """Teste la redistribution de la puissance active et réactive du générateur Slack."""
         try:
             print("\n=== Test de redistribution de la puissance du générateur Slack ===")
             analyzer = PowerFlowAnalyzer(self.network)
-            total_load = self.network.loads_t.p.sum().sum()
             sorted_generators = analyzer.get_sorted_generators()
-            analyzer.redistribute_slack_power(total_load, sorted_generators)
-            print("✓ Redistribution de la puissance du générateur Slack réussie")
+            
+            # Test de la redistribution de la puissance active
+            total_load_p = self.network.loads_t.p.sum().sum()
+            analyzer.redistribute_slack_power(total_load_p, sorted_generators, power_type="active")
+            print("✓ Redistribution de la puissance active du générateur Slack réussie")
+
+            # Test de la redistribution de la puissance réactive
+            total_load_q = self.network.loads_t.q.sum().sum()
+            analyzer.redistribute_slack_power(total_load_q, sorted_generators, power_type="reactive")
+            print("✓ Redistribution de la puissance réactive du générateur Slack réussie")
+
             return True
         except Exception as e:
             print(f"Erreur lors de la redistribution de la puissance du générateur Slack: {e}", file=sys.stderr)
             return False
+
         
     def test_get_sorted_generators(self) -> bool:
         """Teste l'obtention de la liste des générateurs triés par coût marginal."""

@@ -189,8 +189,8 @@ class NetworkDataLoader:
             #Les noms des colonnes dans les données et dans les loads doivent être identiques
             loads_df = pd.read_csv(loads_path, index_col=0, parse_dates=True)
             loads_df.columns = [f"load_{col}" for col in loads_df.columns]
-            network.loads_t.p_set = loads_df
-
+            network.loads_t.p_set = loads_df    #Assignation puissance active
+            network.loads_t.q_set = loads_df * 0.33 #Assignation puissance réactive (33% de la puissance réactive)
             
             # Chargement des coûts marginaux pour les générateurs pilotables
             gen_cost_path = self.data_dir / "timeseries" / year / "generation" / "generators-marginal_cost.csv"
