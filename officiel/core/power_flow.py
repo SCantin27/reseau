@@ -106,12 +106,19 @@ class PowerFlowAnalyzer:
             power_type: "active" pour la puissance active (P) ou "reactive" pour la puissance réactive (Q)
         """
         try:
+            # Identifier le générateur Slack
+            slack_bus = self.network.generators[self.network.generators.control == "Slack"].bus.iloc[0]
+            slack_gen = self.network.generators[self.network.generators.bus == slack_bus].index[0]
+            print("=="*20)
+            print(f"slack_bus : {slack_bus}")
+            print (f"slack_gen : {slack_gen}")
+
             if power_type == "active":
-                slack_power = self.network.generators_t.p["SlackGen"].iloc[-1]
+                slack_power = self.network.generators_t.p.loc[:, slack_gen].iloc[-1]
                 power_attr = "p_set"
                 capacity_attr = "p_nom"
             elif power_type == "reactive":
-                slack_power = self.network.generators_t.q["SlackGen"].iloc[-1]
+                slack_power = self.network.generators_t.q.loc[:, slack_gen].iloc[-1]
                 power_attr = "q_set"
                 capacity_attr = "q_nom"
             else:
@@ -136,9 +143,10 @@ class PowerFlowAnalyzer:
                 slack_power = self.network.generators_t.p["SlackGen"].iloc[-1] if power_type == "active" else self.network.generators_t.q["SlackGen"].iloc[-1]
                 iterations += 1
 
+
+
         except Exception as e:
             print(f"Erreur lors de la redistribution de la puissance {power_type} du générateur Slack : {str(e)}")
-
 
     def get_sorted_generators(self) -> pd.Index:
         """
