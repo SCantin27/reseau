@@ -137,21 +137,6 @@ class NetworkCoreManager:
                 print(f"Total: {losses['total_losses_mw']:.2f} MW")
                 print(f"Pourcentage: {losses['losses_percent']:.2f}%")
             
-            # Test du calcul AC
-            print("\n4. Calcul en mode AC...")
-            success_ac = analyzer.run_power_flow(mode="ac")
-            if success_ac:
-                print("✓ Calcul AC réussi")
-                
-                # Analyse des tensions
-                print("\n5. Analyse des tensions:")
-                voltages = analyzer.get_voltage_profile()
-                if voltages is not None:
-                    print("\nProfils de tension:")
-                    print(voltages.head())
-            
-            return success_dc and success_ac
-            
         except Exception as e:
             print(f"Erreur lors des calculs de flux: {e}", file=sys.stderr)
             return False
@@ -185,31 +170,7 @@ class NetworkCoreManager:
                 print("\nContraintes globales:")
                 print(results["global_constraints"])
 
-                print(f"Coût total: {results['total_cost']:.2f}")
-                
-                # # Export des données de production des réservoirs
-                # print("\n5. Export des données de production vers CSV...")
-                
-                # # Extraire les centrales hydro_reservoir
-                # hydro_reservoir_gens = self.network.generators[
-                #     self.network.generators.carrier == 'hydro_reservoir'
-                # ].index
-                
-                # # Extraire les données de production pour ces centrales
-                # if len(hydro_reservoir_gens) > 0:
-                #     # Données de production par centrale hydro_reservoir
-                #     hydro_production = self.network.generators_t.p[hydro_reservoir_gens]
-                    
-                #     # Ajout de la production totale par type
-                #     production_by_type = results['production_by_type']
-                    
-                #     # Export vers CSV
-                #     hydro_production.to_csv('hydro_reservoir_production.csv')
-                #     production_by_type.to_csv('production_by_type.csv')
-                    
-                #     print(f"✓ Données exportées vers 'hydro_reservoir_production.csv' et 'production_by_type.csv'")
-                # else:
-                #     print("Aucune centrale hydro_reservoir trouvée dans le réseau")
+                print(f"Coût total: {results['total_cost']:.2f}")                
                 
                 return True
             else:
