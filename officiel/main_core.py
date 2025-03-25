@@ -276,17 +276,17 @@ def main():
         print("Échec de la création du réseau")
         return 1
         
-    # Test des calculs de flux
-    success_pf = manager.test_power_flow()
-    if not success_pf:
-        print("Échec des calculs de flux")
-        return 2
+    # # Test des calculs de flux
+    # success_pf = manager.test_power_flow()
+    # if not success_pf:
+    #     print("Échec des calculs de flux")
+    #     return 2
 
-    # Test de la redistribution de la puissance du générateur Slack
-    success_redistribute = manager.test_redistribute_slack_power()
-    if not success_redistribute:
-        print("Échec de la redistribution de la puissance du générateur Slack")
-        return 3        
+    # # Test de la redistribution de la puissance du générateur Slack
+    # success_redistribute = manager.test_redistribute_slack_power()
+    # if not success_redistribute:
+    #     print("Échec de la redistribution de la puissance du générateur Slack")
+    #     return 3        
         
     # # Test de l'obtention des générateurs triés par coût marginal
     # success_sorted_gens = manager.test_get_sorted_generators()
@@ -294,11 +294,11 @@ def main():
     #     print("Échec de l'obtention des générateurs triés par coût marginal")
     #     return 4
 
-    # # Test de l'optimisation
-    # success_opt = manager.test_optimization()
-    # if not success_opt:
-    #     print("Échec de l'optimisation")
-    #     return 5
+    # Test de l'optimisation
+    success_opt = manager.test_optimization()
+    if not success_opt:
+        print("Échec de l'optimisation")
+        return 5
         
     # # Test de l'analyse complète
     # success_analysis = manager.test_complete_analysis()
