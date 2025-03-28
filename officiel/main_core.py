@@ -152,41 +152,41 @@ class NetworkCoreManager:
             print(f"Erreur lors des calculs de flux: {e}", file=sys.stderr)
             return False
     
-    def test_redistribute_slack_power(self) -> bool:
-        """Teste la redistribution de la puissance active et réactive du générateur Slack."""
-        try:
-            print("\n=== Test de redistribution de la puissance du générateur Slack ===")
-            analyzer = PowerFlowAnalyzer(self.network)
-            sorted_generators = analyzer.get_sorted_generators()
+    # def test_redistribute_slack_power(self) -> bool:
+    #     """Teste la redistribution de la puissance active et réactive du générateur Slack."""
+    #     try:
+    #         print("\n=== Test de redistribution de la puissance du générateur Slack ===")
+    #         analyzer = PowerFlowAnalyzer(self.network)
+    #         sorted_generators = analyzer.get_sorted_generators()
             
-            # Test de la redistribution de la puissance active
-            total_load_p = self.network.loads_t.p.sum().sum()
-            analyzer.redistribute_slack_power(total_load_p, sorted_generators, power_type="active")
-            print("✓ Redistribution de la puissance active du générateur Slack réussie")
+    #         # Test de la redistribution de la puissance active
+    #         total_load_p = self.network.loads_t.p.sum().sum()
+    #         analyzer.redistribute_slack_power(total_load_p, sorted_generators, power_type="active")
+    #         print("✓ Redistribution de la puissance active du générateur Slack réussie")
 
-            # Test de la redistrbution de la puissance réactive
-            total_load_q = self.network.loads_t.q.sum().sum()
-            analyzer.redistribute_slack_power(total_load_q, sorted_generators, power_type="reactive")
-            print("✓ Redistribution de la puissance réactive du générateur Slack réussie")
+    #         # Test de la redistrbution de la puissance réactive
+    #         total_load_q = self.network.loads_t.q.sum().sum()
+    #         analyzer.redistribute_slack_power(total_load_q, sorted_generators, power_type="reactive")
+    #         print("✓ Redistribution de la puissance réactive du générateur Slack réussie")
 
-            return True
-        except Exception as e:
-            print(f"Erreur lors de la redistribution de la puissance du générateur Slack: {e}", file=sys.stderr)
-            return False
+    #         return True
+    #     except Exception as e:
+    #         print(f"Erreur lors de la redistribution de la puissance du générateur Slack: {e}", file=sys.stderr)
+    #         return False
 
 
         
-    def test_get_sorted_generators(self) -> bool:
-        """Teste l'obtention de la liste des générateurs triés par coût marginal."""
-        try:
-            print("\n=== Test de l'obtention des générateurs triés par coût marginal ===")
-            analyzer = PowerFlowAnalyzer(self.network)
-            sorted_generators = analyzer.get_sorted_generators()
-            print(f"✓ Générateurs triés par coût marginal: {sorted_generators}")
-            return True
-        except Exception as e:
-            print(f"Erreur lors de l'obtention des générateurs triés par coût marginal: {e}", file=sys.stderr)
-            return False        
+    # def test_get_sorted_generators(self) -> bool:
+    #     """Teste l'obtention de la liste des générateurs triés par coût marginal."""
+    #     try:
+    #         print("\n=== Test de l'obtention des générateurs triés par coût marginal ===")
+    #         analyzer = PowerFlowAnalyzer(self.network)
+    #         sorted_generators = analyzer.get_sorted_generators()
+    #         print(f"✓ Générateurs triés par coût marginal: {sorted_generators}")
+    #         return True
+    #     except Exception as e:
+    #         print(f"Erreur lors de l'obtention des générateurs triés par coût marginal: {e}", file=sys.stderr)
+    #         return False        
     
     def test_optimization(self) -> bool:
         """Teste l'optimisation du réseau."""
@@ -276,11 +276,11 @@ def main():
         print("Échec de la création du réseau")
         return 1
         
-    # # Test des calculs de flux
-    # success_pf = manager.test_power_flow()
-    # if not success_pf:
-    #     print("Échec des calculs de flux")
-    #     return 2
+    # Test des calculs de flux
+    success_pf = manager.test_power_flow()
+    if not success_pf:
+        print("Échec des calculs de flux")
+        return 2
 
     # # Test de la redistribution de la puissance du générateur Slack
     # success_redistribute = manager.test_redistribute_slack_power()
@@ -294,11 +294,11 @@ def main():
     #     print("Échec de l'obtention des générateurs triés par coût marginal")
     #     return 4
 
-    # Test de l'optimisation
-    success_opt = manager.test_optimization()
-    if not success_opt:
-        print("Échec de l'optimisation")
-        return 5
+    # # Test de l'optimisation
+    # success_opt = manager.test_optimization()
+    # if not success_opt:
+    #     print("Échec de l'optimisation")
+    #     return 5
         
     # # Test de l'analyse complète
     # success_analysis = manager.test_complete_analysis()
