@@ -21,7 +21,7 @@ from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
 # Charger le fichier Shapefile des MRC
-shapefile_path = "officiel/data/MRC_GROUPE_9/base_mrc_database.shp"
+shapefile_path = "data/MRC_GROUPE_9/base_mrc_database.shp"
 gdf_mrc = gpd.read_file(shapefile_path)
 
 # Charger le fichier CSV contenant les points
